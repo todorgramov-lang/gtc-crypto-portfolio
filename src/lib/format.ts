@@ -158,24 +158,26 @@ export interface Formatter {
   goldUnit: GoldUnit;
 }
 
+/**
+ * Сумите пристигат тук вече в показваната валута — превръщането става в
+ * convert.ts, преди изчисленията. Тук остава само форматирането.
+ */
 export function makeFormatter(
   currency: DisplayCurrency,
-  eurPerUsd: Decimal,
   privacyMode: boolean,
   goldUnit: GoldUnit,
 ): Formatter {
-  const convert = (usd: Decimal): Decimal =>
-    currency === 'USD' ? usd : usd.times(eurPerUsd);
 
   return {
     currency,
     goldUnit,
-    money: (usd) => (privacyMode ? MASKED : money(convert(usd), currency)),
-    signedMoney: (usd) => (privacyMode ? MASKED : signedMoney(convert(usd), currency)),
+    money: (amount) => (privacyMode ? MASKED : money(amount, currency)),
+    signedMoney: (amount) =>
+      privacyMode ? MASKED : signedMoney(amount, currency),
 
-    price: (usd, asset) =>
+    price: (amount, asset) =>
       money(
-        toDisplayPrice(convert(usd), asset, goldUnit),
+        toDisplayPrice(amount, asset, goldUnit),
         currency,
         assetInfo(asset).priceDecimals,
       ),

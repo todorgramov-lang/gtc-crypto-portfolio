@@ -44,6 +44,8 @@ export function hydrate(stored: StoredTransaction): Transaction {
     note: stored.note,
     // Записите отпреди въвеждането на портфолиата минават към първото.
     portfolioId: stored.portfolioId || DEFAULT_PORTFOLIOS[0]!.id,
+    // Старите записи са въвеждани в долари.
+    currency: stored.currency === 'EUR' ? 'EUR' : 'USD',
   };
 }
 
@@ -59,6 +61,7 @@ export function dehydrate(tx: Transaction): StoredTransaction {
     exchange: tx.exchange,
     note: tx.note,
     portfolioId: tx.portfolioId,
+    currency: tx.currency,
   };
 }
 

@@ -33,7 +33,10 @@ export default function TransactionRow({
   onEdit,
   onDelete,
 }: Props) {
-  const { portfolios, selection } = useApp();
+  const { portfolios, selection, toDisplayTx } = useApp();
+
+  // Сделката помни своята валута; за показване я привеждаме към текущата.
+  const shown = toDisplayTx(transaction);
 
   const inflow = isInflow(transaction.type);
   const info = assetInfo(transaction.asset);
@@ -94,7 +97,7 @@ export default function TransactionRow({
             {formatter.quantity(transaction.quantity, transaction.asset)}
           </span>
           <span className="num block text-[13px] text-fg-faint">
-            {formatter.price(transaction.pricePerUnit, transaction.asset)}
+            {formatter.price(shown.pricePerUnit, transaction.asset)}
           </span>
         </span>
       </button>

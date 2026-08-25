@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { availableQuantity, computeHolding, computeSummary } from './calc';
 import { dec } from './money';
 import { exportCsv, parseCsv } from './csv';
+import { convertTransaction } from './convert';
 import {
   GRAMS_PER_TROY_OUNCE,
   toCanonicalPrice,
@@ -26,6 +27,7 @@ function tx(
     day?: number;
     asset?: AssetId;
     portfolioId?: string;
+    currency?: 'EUR' | 'USD';
   } = {},
 ): Transaction {
   counter += 1;
@@ -40,6 +42,7 @@ function tx(
     exchange: 'Binance',
     note: null,
     portfolioId: options.portfolioId ?? 'anna',
+    currency: options.currency ?? 'USD',
   };
 }
 
@@ -392,6 +395,74 @@ describe('златото стои отделно', () => {
     expect(summary.allocation.BTC.toString()).toBe('50');
     expect(summary.allocation.ETH.toString()).toBe('50');
     expect(summary.allocation.XAU.toString()).toBe('0');
+  });
+});
+
+describe('валута на сделката', () => {
+  /** Както приложението: сделките се привеждат към показваната валута. */
+  const inCurrency = (
+    transactions: Transaction[],
+    to: 'EUR' | 'USD',
+    eurPerUsd: string,
+  ) => transactions.map((tx) => convertTransaction(tx, to, dec(eurPerUsd)));
+
+  it('еврова покупка остава непокътната, колкото и да мърда курсът', () => {
+    // 2 унции по €3 500 — платил си точно €7 000.
+    const bought = [tx('buy', '2', '3500', { day: 1, asset: 'XAU', currency: 'EUR' })];
+
+    for (const rate of ['0.80', '0.856', '0.95']) {
+      const holding = computeHolding(
+        'XAU',
+        inCurrency(bought, 'EUR', rate),
+        quote('4000', '0', 'XAU'),
+        'average',
+      );
+
+      // Инвестираното е €7 000 при всеки курс — това е смисълът на промяната.
+      expect(holding.invested.toString()).toBe('7000');
+      expect(holding.averageCost.toString()).toBe('3500');
+    }
+  });
+
+  it('доларова покупка се превръща по курса, когато гледаш в евро', () => {
+    const bought = [tx('buy', '1', '1000', { day: 1, currency: 'USD' })];
+
+    const holding = computeHolding(
+      'BTC',
+      inCurrency(bought, 'EUR', '0.85'),
+      quote('850', '0', 'BTC'),
+      'average',
+    );
+
+    // 1000 долара × 0.85 = 850 евро
+    expect(holding.invested.toString()).toBe('850');
+    expect(holding.unrealizedProfitLoss.toString()).toBe('0');
+  });
+
+  it('смесени валути се сумират в показваната', () => {
+    const mixed = [
+      tx('buy', '1', '1000', { day: 1, asset: 'BTC', currency: 'USD' }),
+      tx('buy', '1', '1000', { day: 2, asset: 'ETH', currency: 'EUR' }),
+    ];
+
+    const summary = computeSummary(
+      inCurrency(mixed, 'EUR', '0.85'),
+      { BTC: quote('0', '0', 'BTC'), ETH: quote('0', '0', 'ETH') },
+      'average',
+    );
+
+    // 1000 USD → 850 EUR, плюс 1000 EUR както си е.
+    expect(summary.crypto.invested.toString()).toBe('1850');
+  });
+
+  it('преминаването през долари и обратно връща същото число', () => {
+    const original = tx('buy', '1', '3500', { day: 1, asset: 'XAU', currency: 'EUR' });
+    const rate = dec('0.856');
+
+    const toUsd = convertTransaction(original, 'USD', rate);
+    const backToEur = convertTransaction(toUsd, 'EUR', rate);
+
+    near(backToEur.pricePerUnit, '3500');
   });
 });
 

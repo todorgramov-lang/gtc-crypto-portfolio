@@ -13,7 +13,13 @@ import {
 } from '../lib/units';
 import { parseUserNumber, ZERO } from '../lib/money';
 import { newId } from '../lib/storage';
-import { isOutflow, type Transaction, type TxType } from '../lib/types';
+import { convertAmount } from '../lib/convert';
+import {
+  isOutflow,
+  type DisplayCurrency,
+  type Transaction,
+  type TxType,
+} from '../lib/types';
 import { useApp } from '../store';
 import { TYPE_LABEL } from './TransactionRow';
 
@@ -66,6 +72,13 @@ export default function TransactionEditor({ mode, onClose }: Props) {
   const [portfolioId, setPortfolioId] = useState(
     editing?.portfolioId ?? app.defaultPortfolioId,
   );
+  /**
+   * Валутата, в която е сключена сделката. По подразбиране е тази, която
+   * гледаш — купуваш в евро, въвеждаш в евро, вижда се в евро без превод.
+   */
+  const [currency, setCurrency] = useState<DisplayCurrency>(
+    editing?.currency ?? app.settings.currency,
+  );
   const [saving, setSaving] = useState(false);
 
   // Въведеното е в показваната мярка; превръщаме го, преди да го смятаме.
@@ -93,7 +106,15 @@ export default function TransactionEditor({ mode, onClose }: Props) {
     [asset, app.allTransactions, portfolioId, editing?.id],
   );
 
-  const marketPrice = app.feed.quotes[asset]?.price ?? null;
+  /**
+   * Котировката вече е в показваната валута; ако сделката е в друга,
+   * привеждаме я, за да не предлагаме долари срещу еврово поле.
+   */
+  const marketPrice = useMemo(() => {
+    const quoted = app.displayQuotes[asset]?.price;
+    if (!quoted) return null;
+    return convertAmount(quoted, app.settings.currency, currency, app.eurPerUsd);
+  }, [app.displayQuotes, app.settings.currency, app.eurPerUsd, asset, currency]);
 
   /** Обща стойност на сделката, преизчислявана докато въвеждаш. */
   const total = useMemo(() => {
@@ -131,6 +152,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
       exchange: exchange.trim(),
       note: note.trim() === '' ? null : note.trim(),
       portfolioId,
+      currency,
     };
 
     if (editing) await app.updateTransaction(transaction);
@@ -226,6 +248,30 @@ export default function TransactionEditor({ mode, onClose }: Props) {
             </div>
           </Field>
 
+          <Field label="Валута на сделката">
+            <div className="grid grid-cols-2 gap-1.5">
+              {(['EUR', 'USD'] as DisplayCurrency[]).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setCurrency(value)}
+                  className={`rounded-xl py-2 text-sm font-medium transition ${
+                    currency === value ? 'bg-fg text-ink-900' : 'bg-ink-700 text-fg-muted'
+                  }`}
+                >
+                  {value === 'EUR' ? '€ Евро' : '$ Долари'}
+                </button>
+              ))}
+            </div>
+            {currency !== app.settings.currency && (
+              <p className="mt-1.5 px-1 text-xs text-fg-faint">
+                Сделката се записва в {currency === 'EUR' ? 'евро' : 'долари'} и се
+                превръща по днешния курс, докато гледаш в{' '}
+                {app.settings.currency === 'EUR' ? 'евро' : 'долари'}.
+              </p>
+            )}
+          </Field>
+
           <NumberField
             label="Количество"
             value={quantityText}
@@ -240,7 +286,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
               value={priceText}
               onChange={setPriceText}
               placeholder="0.00"
-              suffix="USD"
+              {...{ suffix: currency }}
             />
             {marketPrice && (
               <button
@@ -260,7 +306,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                 <span className="num">
                   {money(
                     toDisplayPrice(marketPrice, asset, goldUnit),
-                    'USD',
+                    currency,
                     assetInfo(asset).priceDecimals,
                   )}
                 </span>
@@ -273,13 +319,13 @@ export default function TransactionEditor({ mode, onClose }: Props) {
             value={feeText}
             onChange={setFeeText}
             placeholder="0.00"
-            suffix="USD"
+            {...{ suffix: currency }}
           />
 
           <div className="rounded-xl bg-ink-700/50 px-3 py-2.5">
             <div className="flex items-center justify-between">
               <span className="text-sm text-fg-muted">Обща стойност</span>
-              <span className="num text-base font-semibold">{money(total, 'USD')}</span>
+              <span className="num text-base font-semibold">{money(total, currency)}</span>
             </div>
 
             {isOutflow(type) && (

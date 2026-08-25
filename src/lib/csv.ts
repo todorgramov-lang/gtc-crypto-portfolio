@@ -7,13 +7,14 @@ import type { Transaction, TxType } from './types';
 
 /**
  * Import / Export на транзакции.
- * Колони: date, asset, type, quantity, price, fee, exchange, note, portfolio
+ * Колони: date, asset, type, quantity, price, fee, exchange, note, portfolio, currency
  *
  * Последната колона е добавена по-късно — файлове без нея се четат нормално
  * и редовете отиват в подразбиращото се портфолио.
  */
 
-export const CSV_HEADER = 'date,asset,type,quantity,price,fee,exchange,note,portfolio';
+export const CSV_HEADER =
+  'date,asset,type,quantity,price,fee,exchange,note,portfolio,currency';
 
 function escapeField(field: string): string {
   if (!/[",\n]/.test(field)) return field;
@@ -35,6 +36,7 @@ export function exportCsv(transactions: Transaction[], portfolios: Portfolio[] =
         tx.exchange,
         tx.note ?? '',
         nameById.get(tx.portfolioId) ?? tx.portfolioId,
+        tx.currency,
       ]
         .map(escapeField)
         .join(','),
@@ -197,6 +199,8 @@ export function parseCsv(
       exchange: fields[6] ?? '',
       note: note === '' ? null : note,
       portfolioId: resolvePortfolio(fields[8] ?? ''),
+      // Файл без колоната идва от версия, в която всичко беше в долари.
+      currency: (fields[9] ?? '').trim().toUpperCase() === 'EUR' ? 'EUR' : 'USD',
     });
   });
 

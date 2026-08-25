@@ -29,6 +29,8 @@ export interface StoredTransaction {
   note: string | null;
   /** На кое портфолио принадлежи (Анна, Тодор…). */
   portfolioId: string;
+  /** В каква валута е сключена сделката. Липсва при стари записи = USD. */
+  currency?: DisplayCurrency;
 }
 
 /** Транзакция, готова за смятане. */
@@ -43,6 +45,8 @@ export interface Transaction {
   exchange: string;
   note: string | null;
   portfolioId: string;
+  /** Валутата, в която са pricePerUnit и fee. */
+  currency: DisplayCurrency;
 }
 
 /** Изчислима позиция по един актив — не се съхранява. Всички суми в USD. */

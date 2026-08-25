@@ -28,7 +28,8 @@ interface Props {
 }
 
 export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: Props) {
-  const { transactions, feed, settings, formatter, eurPerUsd } = useApp();
+  const { transactions, displayTransactions, displayQuotes, feed, settings, formatter, eurPerUsd } =
+    useApp();
 
   const [range, setRange] = useState<ChartRange>('24h');
   const [points, setPoints] = useState<PricePoint[]>([]);
@@ -36,8 +37,9 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
   const [error, setError] = useState<string | null>(null);
 
   const holding = useMemo(
-    () => computeHolding(asset, transactions, feed.quotes[asset], settings.costBasis),
-    [asset, transactions, feed.quotes, settings.costBasis],
+    () =>
+      computeHolding(asset, displayTransactions, displayQuotes[asset], settings.costBasis),
+    [asset, displayTransactions, displayQuotes, settings.costBasis],
   );
 
   const own = useMemo(
