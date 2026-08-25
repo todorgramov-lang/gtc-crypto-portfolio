@@ -4,6 +4,7 @@ import { downloadCsv, exportCsv, parseCsv } from '../lib/csv';
 import { money } from '../lib/format';
 import { PORTFOLIO_COLORS, nextColor, type Portfolio } from '../lib/portfolios';
 import { THEMES } from '../lib/themes';
+import { GOLD_UNITS, GRAMS_PER_TROY_OUNCE, type GoldUnit } from '../lib/units';
 import type { CostBasisMethod, DisplayCurrency } from '../lib/types';
 import { useApp } from '../store';
 
@@ -286,6 +287,27 @@ export default function Settings() {
           <p className="px-1 text-xs leading-relaxed text-fg-faint">
             Всяка транзакция принадлежи на едно портфолио. От началния екран
             превключваш кое гледаш, а „Общо" сумира всички.
+          </p>
+        </Group>
+
+        <Group title="Злато">
+          <Segmented<GoldUnit>
+            label="Мярка"
+            value={settings.goldUnit}
+            options={GOLD_UNITS.map((unit) => ({ value: unit.id, label: unit.name }))}
+            onChange={(goldUnit) => updateSettings({ goldUnit })}
+          />
+
+          <p className="px-1 pb-1 text-xs leading-relaxed text-fg-faint">
+            Количеството се пази в тройунции и се превръща при показване, затова
+            смяната на мярката не променя нищо в записите. Една тройунция е{' '}
+            <span className="num">{GRAMS_PER_TROY_OUNCE}</span> грама.
+          </p>
+
+          <p className="px-1 pb-1 text-xs leading-relaxed text-fg-faint">
+            Цената идва от PAX Gold — токен, обезпечен едно към едно с физическо
+            злато, където една единица е една тройунция. Няма безплатен източник
+            за лондонския спот фиксинг; разминаването обикновено е части от процента.
           </p>
         </Group>
 

@@ -2,7 +2,15 @@ import { useMemo, useState, type ReactNode } from 'react';
 
 import { ASSET_IDS, assetInfo, type AssetId } from '../lib/assets';
 import { availableQuantity } from '../lib/calc';
-import { money, quantityWithSymbol, csvNumber } from '../lib/format';
+import { money, csvNumber } from '../lib/format';
+import {
+  toCanonicalPrice,
+  toCanonicalQuantity,
+  toDisplayPrice,
+  toDisplayQuantity,
+  unitLabel,
+  unitNameSingular,
+} from '../lib/units';
 import { parseUserNumber, ZERO } from '../lib/money';
 import { newId } from '../lib/storage';
 import { isOutflow, type Transaction, type TxType } from '../lib/types';
@@ -32,12 +40,20 @@ export default function TransactionEditor({ mode, onClose }: Props) {
   const [asset, setAsset] = useState<AssetId>(
     editing?.asset ?? (mode.kind === 'create' ? mode.asset : undefined) ?? 'BTC',
   );
+  const goldUnit = app.settings.goldUnit;
+
   const [type, setType] = useState<TxType>(editing?.type ?? 'buy');
+
+  // Полетата показват избраната мярка; съхранява се каноничната.
   const [quantityText, setQuantityText] = useState(
-    editing ? csvNumber(editing.quantity) : '',
+    editing
+      ? csvNumber(toDisplayQuantity(editing.quantity, editing.asset, goldUnit))
+      : '',
   );
   const [priceText, setPriceText] = useState(
-    editing ? csvNumber(editing.pricePerUnit) : '',
+    editing
+      ? csvNumber(toDisplayPrice(editing.pricePerUnit, editing.asset, goldUnit))
+      : '',
   );
   const [feeText, setFeeText] = useState(
     editing && !editing.fee.isZero() ? csvNumber(editing.fee) : '',
@@ -52,8 +68,15 @@ export default function TransactionEditor({ mode, onClose }: Props) {
   );
   const [saving, setSaving] = useState(false);
 
-  const quantity = parseUserNumber(quantityText);
-  const pricePerUnit = parseUserNumber(priceText);
+  // Въведеното е в показваната мярка; превръщаме го, преди да го смятаме.
+  const quantityInput = parseUserNumber(quantityText);
+  const priceInput = parseUserNumber(priceText);
+
+  const quantity = quantityInput
+    ? toCanonicalQuantity(quantityInput, asset, goldUnit)
+    : null;
+  const pricePerUnit = priceInput ? toCanonicalPrice(priceInput, asset, goldUnit) : null;
+
   const fee = parseUserNumber(feeText) ?? ZERO;
 
   /**
@@ -87,11 +110,11 @@ export default function TransactionEditor({ mode, onClose }: Props) {
     }
     if (fee.lt(0)) return 'Таксата не може да е отрицателна.';
     if (isOutflow(type) && quantity.gt(available)) {
-      return `Нямаш толкова. Разполагаш с ${quantityWithSymbol(available, asset)}.`;
+      return `Нямаш толкова. Разполагаш с ${app.formatter.quantity(available, asset)}.`;
     }
     if (Number.isNaN(Date.parse(dateText))) return 'Въведи валидна дата.';
     return null;
-  }, [quantity, pricePerUnit, fee, type, available, asset, dateText]);
+  }, [quantity, pricePerUnit, fee, type, available, asset, dateText, app.formatter]);
 
   async function handleSave() {
     if (error || !quantity || !pricePerUnit || saving) return;
@@ -169,7 +192,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
           )}
 
           <Field label="Актив">
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
               {ASSET_IDS.map((id) => (
                 <button
                   key={id}
@@ -180,7 +203,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                   }`}
                   style={asset === id ? { backgroundColor: assetInfo(id).tint } : undefined}
                 >
-                  {id}
+                  {id === 'XAU' ? 'Злато' : id}
                 </button>
               ))}
             </div>
@@ -207,13 +230,13 @@ export default function TransactionEditor({ mode, onClose }: Props) {
             label="Количество"
             value={quantityText}
             onChange={setQuantityText}
-            placeholder="0.00000000"
-            suffix={asset}
+            placeholder={asset === 'XAU' ? '0.000' : '0.00000000'}
+            suffix={unitLabel(asset, goldUnit)}
           />
 
           <div>
             <NumberField
-              label="Цена за 1"
+              label={`Цена за ${unitNameSingular(asset, goldUnit)}`}
               value={priceText}
               onChange={setPriceText}
               placeholder="0.00"
@@ -224,13 +247,23 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                 type="button"
                 onClick={() =>
                   setPriceText(
-                    csvNumber(marketPrice.toDecimalPlaces(assetInfo(asset).priceDecimals)),
+                    csvNumber(
+                      toDisplayPrice(marketPrice, asset, goldUnit).toDecimalPlaces(
+                        assetInfo(asset).priceDecimals,
+                      ),
+                    ),
                   )
                 }
                 className="mt-1.5 flex w-full items-center justify-between rounded-lg bg-ink-700/60 px-3 py-2 text-[13px] text-fg-muted"
               >
                 <span>Използвай текущата цена</span>
-                <span className="num">{money(marketPrice, 'USD', assetInfo(asset).priceDecimals)}</span>
+                <span className="num">
+                  {money(
+                    toDisplayPrice(marketPrice, asset, goldUnit),
+                    'USD',
+                    assetInfo(asset).priceDecimals,
+                  )}
+                </span>
               </button>
             )}
           </div>
@@ -255,7 +288,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                 <span
                   className={`num text-[13px] ${available.gt(0) ? 'text-fg-muted' : 'text-loss'}`}
                 >
-                  {quantityWithSymbol(available, asset)}
+                  {app.formatter.quantity(available, asset)}
                 </span>
               </div>
             )}

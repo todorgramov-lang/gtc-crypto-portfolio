@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { assetInfo, type AssetId } from '../lib/assets';
 import { computeHolding } from '../lib/calc';
 import { CHART_RANGES, RANGE_LABELS, loadChart } from '../lib/chart';
-import { money } from '../lib/format';
+import { dec } from '../lib/money';
+import { toDisplayPrice, unitNameSingular } from '../lib/units';
 import type { ChartRange, PricePoint, PriceSource, Transaction } from '../lib/types';
 import { toneClass } from '../components/AssetCard';
 import FlashValue from '../components/FlashValue';
@@ -72,13 +73,20 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
 
   // Графиката се показва в избраната валута — конвертираме точките.
   const rate = settings.currency === 'USD' ? 1 : eurPerUsd.toNumber();
+
+  /**
+   * Графиката идва в цена за канонична единица — за златото това е унция.
+   * Ако се гледа в грамове, цялата ос трябва да слезе със същия множител.
+   */
+  const unitScale = toDisplayPrice(dec(1), asset, settings.goldUnit).toNumber();
+  const scale = rate * unitScale;
   const displayPoints = useMemo(
-    () => (rate === 1 ? points : points.map((p) => ({ time: p.time, close: p.close * rate }))),
-    [points, rate],
+    () => (scale === 1 ? points : points.map((p) => ({ time: p.time, close: p.close * scale }))),
+    [points, scale],
   );
 
   const averageCost = holding.averageCost.gt(0)
-    ? holding.averageCost.times(rate).toNumber()
+    ? holding.averageCost.times(scale).toNumber()
     : null;
 
   const info = assetInfo(asset);
@@ -144,17 +152,15 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
             points={displayPoints}
             averageCost={averageCost}
             averageCostLabel={
-              averageCost === null
-                ? null
-                : money(holding.averageCost.times(rate), settings.currency, info.priceDecimals)
+              averageCost === null ? null : formatter.price(holding.averageCost, asset)
             }
             currentPrice={
-              holding.currentPrice.gt(0) ? holding.currentPrice.times(rate).toNumber() : null
+              holding.currentPrice.gt(0)
+                ? holding.currentPrice.times(scale).toNumber()
+                : null
             }
             currentPriceLabel={
-              holding.currentPrice.gt(0)
-                ? money(holding.currentPrice.times(rate), settings.currency, info.priceDecimals)
-                : null
+              holding.currentPrice.gt(0) ? formatter.price(holding.currentPrice, asset) : null
             }
             loading={loading}
             error={error}
@@ -163,8 +169,14 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
 
         <section className="rounded-2xl border border-ink-600/60 bg-ink-800/60 px-3.5">
           <Metric label="Наличност" value={formatter.quantity(holding.quantity, asset)} />
-          <Metric label="Средна цена" value={formatter.price(holding.averageCost, asset)} />
-          <Metric label="Текуща цена" value={formatter.price(holding.currentPrice, asset)} />
+          <Metric
+            label={`Средна цена за ${unitNameSingular(asset, settings.goldUnit)}`}
+            value={formatter.price(holding.averageCost, asset)}
+          />
+          <Metric
+            label={`Текуща цена за ${unitNameSingular(asset, settings.goldUnit)}`}
+            value={formatter.price(holding.currentPrice, asset)}
+          />
           <Metric label="Инвестирано" value={formatter.money(holding.invested)} />
           <Metric label="Текуща стойност" value={formatter.money(holding.currentValue)} />
           <Metric

@@ -2,6 +2,7 @@ import type { Decimal } from './money';
 import type { AssetId } from './assets';
 import type { PortfolioSelection } from './portfolios';
 import type { ThemeId } from './themes';
+import type { GoldUnit } from './units';
 
 export type TxType = 'buy' | 'sell' | 'transferIn' | 'transferOut';
 
@@ -104,6 +105,8 @@ export interface Settings {
   theme: ThemeId;
   /** Кое портфолио се гледа в момента (или всички заедно). */
   selection: PortfolioSelection;
+  /** В какво се мери златото при показване и въвеждане. */
+  goldUnit: GoldUnit;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -113,6 +116,7 @@ export const DEFAULT_SETTINGS: Settings = {
   priceFlash: true,
   theme: 'midnight',
   selection: 'all',
+  goldUnit: 'g',
 };
 
 export type ChartRange = '24h' | '7d' | '30d' | '1y';

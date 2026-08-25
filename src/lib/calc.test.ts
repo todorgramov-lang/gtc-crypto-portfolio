@@ -3,6 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { availableQuantity, computeHolding, computeSummary } from './calc';
 import { dec } from './money';
 import { exportCsv, parseCsv } from './csv';
+import {
+  GRAMS_PER_TROY_OUNCE,
+  toCanonicalPrice,
+  toCanonicalQuantity,
+  toDisplayPrice,
+  toDisplayQuantity,
+} from './units';
 import type { AssetId } from './assets';
 import type { Quote, Quotes, Transaction, TxType } from './types';
 
@@ -270,6 +277,72 @@ describe('портфолиа', () => {
     expect(
       availableQuantity('BTC', inPortfolio(transactions, 'todor')).toString(),
     ).toBe('2');
+  });
+});
+
+describe('злато и мерки', () => {
+  it('грамовете се превръщат в унции и обратно без загуба', () => {
+    // 100 грама кюлче.
+    const canonical = toCanonicalQuantity(dec('100'), 'XAU', 'g');
+    expect(toDisplayQuantity(canonical, 'XAU', 'g').toFixed(10)).toBe(
+      dec('100').toFixed(10),
+    );
+
+    // 100 г = 100 / 31.1034768 тройунции
+    const expectedOunces = dec('100').div(dec(GRAMS_PER_TROY_OUNCE));
+    expect(canonical.toFixed(12)).toBe(expectedOunces.toFixed(12));
+  });
+
+  it('цената за грам е цената за унция, делена на 31.1034768', () => {
+    const perOunce = dec('4629.22');
+    const perGram = toDisplayPrice(perOunce, 'XAU', 'g');
+
+    expect(perGram.toFixed(4)).toBe(perOunce.div(dec(GRAMS_PER_TROY_OUNCE)).toFixed(4));
+    // Обратно към каноничната.
+    expect(toCanonicalPrice(perGram, 'XAU', 'g').toFixed(6)).toBe(perOunce.toFixed(6));
+  });
+
+  it('криптовалутите не се пипат от мярката', () => {
+    const value = dec('0.05');
+    expect(toCanonicalQuantity(value, 'BTC', 'g').toString()).toBe('0.05');
+    expect(toDisplayQuantity(value, 'BTC', 'g').toString()).toBe('0.05');
+    expect(toDisplayPrice(dec('42000'), 'BTC', 'g').toString()).toBe('42000');
+  });
+
+  it('стойността излиза еднаква, независимо в какво си въвел', () => {
+    // Едно и също: 100 г по 148.83 долара, или 3.2151 унции по 4629.22.
+    const perOunce = dec('4629.22');
+    const perGram = toDisplayPrice(perOunce, 'XAU', 'g');
+
+    const viaGrams = {
+      quantity: toCanonicalQuantity(dec('100'), 'XAU', 'g'),
+      price: toCanonicalPrice(perGram, 'XAU', 'g'),
+    };
+    const viaOunces = {
+      quantity: toCanonicalQuantity(dec('100').div(dec(GRAMS_PER_TROY_OUNCE)), 'XAU', 'oz'),
+      price: toCanonicalPrice(perOunce, 'XAU', 'oz'),
+    };
+
+    near(
+      viaGrams.quantity.times(viaGrams.price),
+      viaOunces.quantity.times(viaOunces.price).toFixed(),
+    );
+  });
+
+  it('златото се смята наравно с останалите активи', () => {
+    // 1 унция по 4000, сега 4629.22
+    const transactions = [tx('buy', '1', '4000', { day: 1, asset: 'XAU' })];
+    const holding = computeHolding(
+      'XAU',
+      transactions,
+      quote('4629.22', '0', 'XAU'),
+      'average',
+    );
+
+    expect(holding.quantity.toString()).toBe('1');
+    expect(holding.invested.toString()).toBe('4000');
+    expect(holding.currentValue.toString()).toBe('4629.22');
+    expect(holding.unrealizedProfitLoss.toString()).toBe('629.22');
   });
 });
 

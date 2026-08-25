@@ -323,8 +323,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const formatter = useMemo(
-    () => makeFormatter(settings.currency, feed.eurPerUsd, settings.privacyMode),
-    [settings.currency, settings.privacyMode, feed.eurPerUsd],
+    () =>
+      makeFormatter(
+        settings.currency,
+        feed.eurPerUsd,
+        settings.privacyMode,
+        settings.goldUnit,
+      ),
+    [settings.currency, settings.privacyMode, settings.goldUnit, feed.eurPerUsd],
   );
 
   const knownExchanges = useMemo(() => {

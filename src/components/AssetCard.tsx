@@ -35,7 +35,7 @@ export default function AssetCard({ holding, formatter, flashEnabled, onOpen }: 
           className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[15px] font-bold"
           style={{ backgroundColor: `${info.tint}1f`, color: info.tint }}
         >
-          {holding.asset.slice(0, 1)}
+          {info.glyph}
         </span>
 
         <span className="min-w-0">
@@ -44,6 +44,7 @@ export default function AssetCard({ holding, formatter, flashEnabled, onOpen }: 
           </span>
           <span className="block truncate text-[13px] leading-tight text-fg-faint">
             {info.name}
+            {info.note && <span className="text-fg-faint/70"> · {info.note}</span>}
           </span>
         </span>
 

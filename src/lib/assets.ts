@@ -3,7 +3,7 @@
  * останалата част от приложението се адаптира сама.
  */
 
-export type AssetId = 'BTC' | 'ETH' | 'SOL' | 'HYPE';
+export type AssetId = 'BTC' | 'ETH' | 'SOL' | 'HYPE' | 'XAU';
 
 export interface AssetInfo {
   id: AssetId;
@@ -18,6 +18,15 @@ export interface AssetInfo {
   priceDecimals: number;
   /** Акцентен цвят. */
   tint: string;
+  /** Знакът в кръгчето на картата. */
+  glyph: string;
+  /**
+   * Мярката, в която се води количеството. За криптовалутите това е самата
+   * монета; за златото — тройунция, защото цената идва в долари за унция.
+   */
+  canonicalUnit: string;
+  /** Пояснение под името, когато има какво да се каже за източника. */
+  note?: string;
 }
 
 export const ASSETS: Record<AssetId, AssetInfo> = {
@@ -29,6 +38,8 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     hyperliquidCoin: null,
     priceDecimals: 2,
     tint: '#F7931A',
+    glyph: 'B',
+    canonicalUnit: 'BTC',
   },
   ETH: {
     id: 'ETH',
@@ -38,6 +49,8 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     hyperliquidCoin: null,
     priceDecimals: 2,
     tint: '#8A92B2',
+    glyph: 'E',
+    canonicalUnit: 'ETH',
   },
   SOL: {
     id: 'SOL',
@@ -47,6 +60,8 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     hyperliquidCoin: null,
     priceDecimals: 2,
     tint: '#14F195',
+    glyph: 'S',
+    canonicalUnit: 'SOL',
   },
   HYPE: {
     id: 'HYPE',
@@ -56,11 +71,31 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     hyperliquidCoin: 'HYPE',
     priceDecimals: 3,
     tint: '#4FE9CD',
+    glyph: 'H',
+    canonicalUnit: 'HYPE',
+  },
+  XAU: {
+    id: 'XAU',
+    name: 'Злато',
+    /**
+     * Няма безплатен източник за лондонския спот фиксинг на златото, затова
+     * цената идва от PAX Gold — токен, обезпечен едно към едно с физическо
+     * злато в трезор, където една единица е една тройунция. Разминава се със
+     * спота с части от процента.
+     */
+    binanceSymbol: 'PAXGUSDT',
+    coinGeckoId: 'pax-gold',
+    hyperliquidCoin: null,
+    priceDecimals: 2,
+    tint: '#D4AF37',
+    glyph: 'Au',
+    canonicalUnit: 'oz',
+    note: 'по PAX Gold',
   },
 };
 
 /** Редът, в който активите се показват навсякъде. */
-export const ASSET_IDS: AssetId[] = ['BTC', 'ETH', 'SOL', 'HYPE'];
+export const ASSET_IDS: AssetId[] = ['BTC', 'ETH', 'SOL', 'HYPE', 'XAU'];
 
 export const assetInfo = (id: AssetId): AssetInfo => ASSETS[id];
 

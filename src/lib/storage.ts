@@ -114,6 +114,7 @@ export async function loadSettings(): Promise<Settings> {
     priceFlash: raw.priceFlash !== false,
     theme,
     selection: typeof raw.selection === 'string' ? raw.selection : 'all',
+    goldUnit: raw.goldUnit === 'oz' ? 'oz' : 'g',
   };
 }
 

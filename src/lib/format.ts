@@ -1,5 +1,12 @@
 import { Decimal, ZERO } from './money';
 import { assetInfo, QUANTITY_DECIMALS, type AssetId } from './assets';
+import {
+  quantityDecimals,
+  toDisplayPrice,
+  toDisplayQuantity,
+  unitLabel,
+  type GoldUnit,
+} from './units';
 import type { DisplayCurrency } from './types';
 
 /** Маска за privacy режим. */
@@ -137,31 +144,50 @@ export interface Formatter {
   money: (usd: Decimal) => string;
   /** Сума със знак; скрива се в privacy режим. */
   signedMoney: (usd: Decimal) => string;
-  /** Цена — остава видима, защото е публична информация. */
+  /**
+   * Цена за една показвана единица — остава видима, защото е публична.
+   * За златото това е цената за грам или за унция, според настройката.
+   */
   price: (usd: Decimal, asset: AssetId) => string;
-  /** Количество; скрива се в privacy режим. */
+  /** Количество в показваната мярка; скрива се в privacy режим. */
   quantity: (value: Decimal, asset: AssetId) => string;
   /** Процентите остават видими — не издават размера на портфолиото. */
   signedPercent: (value: Decimal) => string;
   percent: (value: Decimal) => string;
   currency: DisplayCurrency;
+  goldUnit: GoldUnit;
 }
 
 export function makeFormatter(
   currency: DisplayCurrency,
   eurPerUsd: Decimal,
   privacyMode: boolean,
+  goldUnit: GoldUnit,
 ): Formatter {
   const convert = (usd: Decimal): Decimal =>
     currency === 'USD' ? usd : usd.times(eurPerUsd);
 
   return {
     currency,
+    goldUnit,
     money: (usd) => (privacyMode ? MASKED : money(convert(usd), currency)),
     signedMoney: (usd) => (privacyMode ? MASKED : signedMoney(convert(usd), currency)),
-    price: (usd, asset) => price(convert(usd), asset, currency),
-    quantity: (value, asset) =>
-      privacyMode ? `${MASKED} ${asset}` : quantityWithSymbol(value, asset),
+
+    price: (usd, asset) =>
+      money(
+        toDisplayPrice(convert(usd), asset, goldUnit),
+        currency,
+        assetInfo(asset).priceDecimals,
+      ),
+
+    quantity: (value, asset) => {
+      const label = unitLabel(asset, goldUnit);
+      if (privacyMode) return `${MASKED} ${label}`;
+
+      const shown = toDisplayQuantity(value, asset, goldUnit);
+      return `${quantity(shown, quantityDecimals(asset, goldUnit))} ${label}`;
+    },
+
     signedPercent: (value) => signedPercent(value ?? ZERO),
     percent: (value) => percent(value ?? ZERO),
   };
