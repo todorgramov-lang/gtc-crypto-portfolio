@@ -1,0 +1,119 @@
+@import 'tailwindcss';
+
+@import '@fontsource/onest/400.css';
+@import '@fontsource/onest/500.css';
+@import '@fontsource/onest/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+/**
+ * Финансов „terminal" вид: тъмна основа, моноспейс за всички числа, за да не
+ * подскачат при промяна.
+ */
+@theme {
+  --font-sans: 'Onest', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --color-ink-900: #0b0f14;
+  --color-ink-800: #111721;
+  --color-ink-700: #18202c;
+  --color-ink-600: #222c3a;
+  --color-ink-500: #33404f;
+
+  --color-fg: #e8edf4;
+  --color-fg-muted: #94a3b4;
+  --color-fg-faint: #64748b;
+
+  --color-profit: #00c853;
+  --color-loss: #ff3b30;
+  --color-flat: #8e8e93;
+  --color-warn: #ffb300;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ink-900);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  /* Без bounce на iOS, за да не се вижда бялото под приложението. */
+  overscroll-behavior-y: none;
+}
+
+/* Числата винаги моноспейс с табулярни цифри — не подскачат при промяна. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* Безопасни зони на iPhone (изрезката и лентата долу). */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Скриваме скролбара, но пазим скролването. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Кратък flash при промяна на цена — 300ms, както в заданието. */
+@keyframes flash-up {
+  0% {
+    background-color: rgb(0 200 83 / 0.28);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes flash-down {
+  0% {
+    background-color: rgb(255 59 48 / 0.28);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.flash-up {
+  animation: flash-up 300ms ease-out;
+}
+
+.flash-down {
+  animation: flash-down 300ms ease-out;
+}
+
+/* Уважаваме системната настройка за намалено движение. */
+@media (prefers-reduced-motion: reduce) {
+  .flash-up,
+  .flash-down {
+    animation: none;
+  }
+}
+
+/* Полетата за числа да не зумват при фокус на iOS (иска поне 16px). */
+input[inputmode='decimal'],
+input[type='text'],
+input[type='date'],
+input[type='datetime-local'],
+select {
+  font-size: 16px;
+}

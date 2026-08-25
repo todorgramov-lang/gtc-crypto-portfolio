@@ -1,0 +1,64 @@
+name: Качване на GitHub Pages
+
+# Всяко качване в main прави нов билд и го публикува.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Правата, които GitHub Pages иска, за да публикува.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Едно качване наведнъж; ново качване изчаква текущото да завърши.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Билд
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Изтегляне на кода
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Инсталиране на зависимостите
+        run: npm ci
+
+      - name: Тестове върху изчисленията
+        run: npm test
+
+      - name: Билд
+        run: npm run build
+
+      - name: Подготовка за Pages
+        uses: actions/configure-pages@v5
+
+      - name: Качване на готовата папка
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Публикуване
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Публикуване в GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
