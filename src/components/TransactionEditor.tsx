@@ -125,25 +125,19 @@ export default function TransactionEditor({ mode, onClose }: Props) {
         onClick={onClose}
       />
 
-      <div className="pb-safe max-h-[92vh] overflow-y-auto rounded-t-3xl border-t border-ink-600 bg-ink-800">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-700 bg-ink-800/95 px-4 py-3 backdrop-blur">
-          <button type="button" onClick={onClose} className="text-base text-fg-muted">
-            Отказ
-          </button>
-          <h2 className="text-base font-semibold">
+      {/*
+        Височината е ограничена така, че панелът никога да не стига до лентата
+        с часа и сигнала — оттам идваше застъпването.
+      */}
+      <div className="flex max-h-[calc(100dvh-env(safe-area-inset-top)-2.5rem)] flex-col rounded-t-3xl border-t border-ink-600 bg-ink-800">
+        <header className="shrink-0 border-b border-ink-700 px-4 pb-3 pt-2.5">
+          <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-ink-500" aria-hidden />
+          <h2 className="text-center text-base font-semibold">
             {editing ? 'Редакция' : 'Нова транзакция'}
           </h2>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={error !== null || saving}
-            className="text-base font-semibold text-profit disabled:text-fg-faint"
-          >
-            Запази
-          </button>
         </header>
 
-        <div className="space-y-5 px-4 py-4">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
           {app.portfolios.length > 1 && (
             <Field label="Портфолио">
               <div className="grid grid-cols-2 gap-1.5">
@@ -267,10 +261,6 @@ export default function TransactionEditor({ mode, onClose }: Props) {
             )}
           </div>
 
-          {error && (
-            <p className="rounded-lg bg-loss/10 px-3 py-2 text-[13px] text-loss">{error}</p>
-          )}
-
           <Field label="Дата">
             <input
               type="datetime-local"
@@ -315,6 +305,38 @@ export default function TransactionEditor({ mode, onClose }: Props) {
             />
           </Field>
         </div>
+
+        {/*
+          Действията стоят долу, до палеца, и не се скролват заедно със
+          съдържанието. Причината за грешката е точно над тях — там гледаш,
+          когато „Запази" е неактивен.
+        */}
+        <footer className="pb-safe shrink-0 border-t border-ink-700 bg-ink-800 px-4 pt-3">
+          {error && (
+            <p className="mb-3 rounded-lg bg-loss/10 px-3 py-2 text-[13px] text-loss">
+              {error}
+            </p>
+          )}
+
+          <div className="flex gap-3 pb-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl bg-ink-600 py-3.5 text-base font-medium text-fg-muted transition active:scale-[0.98]"
+            >
+              Отказ
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={error !== null || saving}
+              className="flex-[1.6] rounded-xl bg-profit py-3.5 text-base font-semibold text-white transition active:scale-[0.98] disabled:bg-ink-600 disabled:text-fg-faint"
+            >
+              {saving ? 'Записване…' : 'Запази'}
+            </button>
+          </div>
+        </footer>
       </div>
     </div>
   );
