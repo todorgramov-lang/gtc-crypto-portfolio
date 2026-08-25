@@ -4,9 +4,12 @@ import type { PricePoint } from '../lib/types';
 
 interface Props {
   points: PricePoint[];
-  /** Средна цена на покупка в показваната валута — хоризонталната линия. */
+  /** Средна цена на покупка в показваната валута — жълтата пунктирана линия. */
   averageCost: number | null;
   averageCostLabel: string | null;
+  /** Текуща цена в показваната валута — линията на нивото „сега". */
+  currentPrice: number | null;
+  currentPriceLabel: string | null;
   loading: boolean;
   error: string | null;
 }
@@ -24,6 +27,8 @@ export default function PriceChart({
   points,
   averageCost,
   averageCostLabel,
+  currentPrice,
+  currentPriceLabel,
   loading,
   error,
 }: Props) {
@@ -34,9 +39,11 @@ export default function PriceChart({
     let min = Math.min(...values);
     let max = Math.max(...values);
 
-    if (averageCost !== null) {
-      min = Math.min(min, averageCost);
-      max = Math.max(max, averageCost);
+    // И двете линии трябва да се побират, иначе излизат извън рамката.
+    for (const level of [averageCost, currentPrice]) {
+      if (level === null) continue;
+      min = Math.min(min, level);
+      max = Math.max(max, level);
     }
 
     if (max === min) {
@@ -65,8 +72,9 @@ export default function PriceChart({
       area,
       rising,
       averageY: averageCost !== null ? y(averageCost) : null,
+      currentY: currentPrice !== null ? y(currentPrice) : null,
     };
-  }, [points, averageCost]);
+  }, [points, averageCost, currentPrice]);
 
   if (loading && !geometry) {
     return <Placeholder>Зареждане…</Placeholder>;
@@ -118,11 +126,45 @@ export default function PriceChart({
             vectorEffect="non-scaling-stroke"
           />
         )}
+
+        {/* Текущата цена — плътна линия в цвета на графиката. */}
+        {geometry.currentY !== null && (
+          <line
+            x1="0"
+            x2={WIDTH}
+            y1={geometry.currentY}
+            y2={geometry.currentY}
+            stroke={stroke}
+            strokeWidth="1"
+            strokeOpacity="0.55"
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
       </svg>
 
-      {averageCostLabel && (
-        <span className="num absolute left-0 top-0 rounded bg-warn/15 px-1.5 py-0.5 text-[10px] text-warn">
-          Средна цена {averageCostLabel}
+      {/*
+        Етикетите стоят на височината на своята линия. SVG-то е разтеглено
+        линейно, затова процентът се смята направо от координатата.
+      */}
+      {geometry.currentY !== null && currentPriceLabel && (
+        <span
+          className="num pointer-events-none absolute right-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium"
+          style={{
+            top: `${(geometry.currentY / HEIGHT) * 100}%`,
+            color: stroke,
+            backgroundColor: 'color-mix(in oklab, var(--color-ink-900) 82%, transparent)',
+          }}
+        >
+          сега {currentPriceLabel}
+        </span>
+      )}
+
+      {geometry.averageY !== null && averageCostLabel && (
+        <span
+          className="num pointer-events-none absolute left-0 -translate-y-1/2 rounded bg-warn/15 px-1.5 py-0.5 text-[10px] text-warn"
+          style={{ top: `${(geometry.averageY / HEIGHT) * 100}%` }}
+        >
+          средна {averageCostLabel}
         </span>
       )}
     </div>

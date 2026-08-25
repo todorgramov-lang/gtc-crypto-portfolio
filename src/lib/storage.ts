@@ -1,6 +1,8 @@
 import { get, set } from 'idb-keyval';
 import { dec, toStorage, type Decimal } from './money';
 import { isAssetId, type AssetId } from './assets';
+import { DEFAULT_PORTFOLIOS, type Portfolio } from './portfolios';
+import { DEFAULT_THEME, THEMES, type ThemeId } from './themes';
 import {
   DEFAULT_SETTINGS,
   type PriceAlert,
@@ -18,6 +20,7 @@ import {
 const KEY_TRANSACTIONS = 'crypto.transactions';
 const KEY_SETTINGS = 'crypto.settings';
 const KEY_ALERTS = 'crypto.alerts';
+const KEY_PORTFOLIOS = 'crypto.portfolios';
 const KEY_QUOTE_CACHE = 'crypto.quoteCache';
 const KEY_FX_RATE = 'crypto.fxRate';
 
@@ -39,6 +42,8 @@ export function hydrate(stored: StoredTransaction): Transaction {
     date: new Date(stored.date),
     exchange: stored.exchange,
     note: stored.note,
+    // Записите отпреди въвеждането на портфолиата минават към първото.
+    portfolioId: stored.portfolioId || DEFAULT_PORTFOLIOS[0]!.id,
   };
 }
 
@@ -53,6 +58,7 @@ export function dehydrate(tx: Transaction): StoredTransaction {
     date: tx.date.toISOString(),
     exchange: tx.exchange,
     note: tx.note,
+    portfolioId: tx.portfolioId,
   };
 }
 
@@ -97,16 +103,52 @@ export async function loadSettings(): Promise<Settings> {
   const raw = await get<Partial<Settings>>(KEY_SETTINGS);
   if (!raw || typeof raw !== 'object') return { ...DEFAULT_SETTINGS };
 
+  const theme = THEMES.some((item) => item.id === raw.theme)
+    ? (raw.theme as ThemeId)
+    : DEFAULT_THEME;
+
   return {
     currency: raw.currency === 'USD' ? 'USD' : 'EUR',
     costBasis: raw.costBasis === 'fifo' ? 'fifo' : 'average',
     privacyMode: raw.privacyMode === true,
     priceFlash: raw.priceFlash !== false,
+    theme,
+    selection: typeof raw.selection === 'string' ? raw.selection : 'all',
   };
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
   await set(KEY_SETTINGS, settings);
+}
+
+// ---------------------------------------------------------------------------
+// Портфолиа
+// ---------------------------------------------------------------------------
+
+function isValidPortfolio(value: unknown): value is Portfolio {
+  if (typeof value !== 'object' || value === null) return false;
+  const portfolio = value as Record<string, unknown>;
+
+  return (
+    typeof portfolio.id === 'string' &&
+    portfolio.id.length > 0 &&
+    typeof portfolio.name === 'string' &&
+    typeof portfolio.color === 'string'
+  );
+}
+
+export async function loadPortfolios(): Promise<Portfolio[]> {
+  const raw = await get<unknown>(KEY_PORTFOLIOS);
+  if (!Array.isArray(raw)) return DEFAULT_PORTFOLIOS.map((item) => ({ ...item }));
+
+  const valid = raw.filter(isValidPortfolio);
+  // Никога не оставаме без нито едно портфолио — иначе няма къде да отиде
+  // следващата транзакция.
+  return valid.length > 0 ? valid : DEFAULT_PORTFOLIOS.map((item) => ({ ...item }));
+}
+
+export async function savePortfolios(portfolios: Portfolio[]): Promise<void> {
+  await set(KEY_PORTFOLIOS, portfolios);
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,7 @@
 import type { Decimal } from './money';
 import type { AssetId } from './assets';
+import type { PortfolioSelection } from './portfolios';
+import type { ThemeId } from './themes';
 
 export type TxType = 'buy' | 'sell' | 'transferIn' | 'transferOut';
 
@@ -24,6 +26,8 @@ export interface StoredTransaction {
   date: string;
   exchange: string;
   note: string | null;
+  /** На кое портфолио принадлежи (Анна, Тодор…). */
+  portfolioId: string;
 }
 
 /** Транзакция, готова за смятане. */
@@ -37,6 +41,7 @@ export interface Transaction {
   date: Date;
   exchange: string;
   note: string | null;
+  portfolioId: string;
 }
 
 /** Изчислима позиция по един актив — не се съхранява. Всички суми в USD. */
@@ -95,6 +100,10 @@ export interface Settings {
   privacyMode: boolean;
   /** Пулсиране на цените при промяна. */
   priceFlash: boolean;
+  /** Цветова тема на приложението. */
+  theme: ThemeId;
+  /** Кое портфолио се гледа в момента (или всички заедно). */
+  selection: PortfolioSelection;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -102,6 +111,8 @@ export const DEFAULT_SETTINGS: Settings = {
   costBasis: 'average',
   privacyMode: false,
   priceFlash: true,
+  theme: 'midnight',
+  selection: 'all',
 };
 
 export type ChartRange = '24h' | '7d' | '30d' | '1y';

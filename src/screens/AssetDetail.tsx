@@ -148,6 +148,14 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
                 ? null
                 : money(holding.averageCost.times(rate), settings.currency, info.priceDecimals)
             }
+            currentPrice={
+              holding.currentPrice.gt(0) ? holding.currentPrice.times(rate).toNumber() : null
+            }
+            currentPriceLabel={
+              holding.currentPrice.gt(0)
+                ? money(holding.currentPrice.times(rate), settings.currency, info.priceDecimals)
+                : null
+            }
             loading={loading}
             error={error}
           />

@@ -1,6 +1,8 @@
 import { assetInfo } from '../lib/assets';
 import { formatDate, type Formatter } from '../lib/format';
 import { isInflow, type Transaction, type TxType } from '../lib/types';
+import { ALL_PORTFOLIOS, portfolioById } from '../lib/portfolios';
+import { useApp } from '../store';
 
 export const TYPE_LABEL: Record<TxType, string> = {
   buy: 'Покупка',
@@ -31,8 +33,16 @@ export default function TransactionRow({
   onEdit,
   onDelete,
 }: Props) {
+  const { portfolios, selection } = useApp();
+
   const inflow = isInflow(transaction.type);
   const info = assetInfo(transaction.asset);
+
+  // Чие е показваме само в общия изглед — иначе е излишно повторение.
+  const owner =
+    selection === ALL_PORTFOLIOS && portfolios.length > 1
+      ? portfolioById(portfolios, transaction.portfolioId)
+      : undefined;
 
   return (
     <li className="flex items-center gap-3 border-b border-ink-700/70 px-1 py-2.5 last:border-0">
@@ -52,6 +62,12 @@ export default function TransactionRow({
 
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5">
+            {owner && (
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: owner.color }}
+              />
+            )}
             <span className="text-[13px] font-medium">{TYPE_LABEL[transaction.type]}</span>
             {showAsset && (
               <span className="num text-[13px] font-semibold" style={{ color: info.tint }}>
@@ -61,6 +77,7 @@ export default function TransactionRow({
           </span>
 
           <span className="block truncate text-[11px] text-fg-faint">
+            {owner && `${owner.name} · `}
             {formatDate(transaction.date)}
             {transaction.exchange && ` · ${transaction.exchange}`}
             {transaction.note && ` · ${transaction.note}`}

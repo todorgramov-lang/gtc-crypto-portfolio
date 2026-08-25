@@ -14,7 +14,12 @@ function tx(
   type: TxType,
   quantity: string,
   price: string,
-  options: { fee?: string; day?: number; asset?: AssetId } = {},
+  options: {
+    fee?: string;
+    day?: number;
+    asset?: AssetId;
+    portfolioId?: string;
+  } = {},
 ): Transaction {
   counter += 1;
   return {
@@ -27,7 +32,28 @@ function tx(
     date: new Date(2025, 0, options.day ?? 1),
     exchange: 'Binance',
     note: null,
+    portfolioId: options.portfolioId ?? 'anna',
   };
+}
+
+/** Както приложението — филтрира по избраното портфолио. */
+function inPortfolio(transactions: Transaction[], portfolioId: string): Transaction[] {
+  return transactions.filter((item) => item.portfolioId === portfolioId);
+}
+
+/**
+ * Сравнява на 10 знака.
+ *
+ * Формулата от заданието е „Инвестирано = Наличност × Средна цена", а
+ * средната цена е частно. Когато то е безкрайна десетична дроб — например
+ * 500 / 3 — обратното умножение оставя остатък около трийсетия знак.
+ * Това не е грешка в сметките, а свойство на самото деление; в приложението
+ * никога не се вижда, защото сумите се показват с 2 знака. Десет знака са
+ * достатъчно строги, за да хванат истинска грешка, и достатъчно свободни, за
+ * да не се спъват в 1e-31.
+ */
+function near(value: { toFixed: (n: number) => string }, expected: string): void {
+  expect(value.toFixed(10)).toBe(dec(expected).toFixed(10));
 }
 
 function quote(price: string, change = '0', asset: AssetId = 'BTC'): Quote {
@@ -198,14 +224,68 @@ describe('точност', () => {
   });
 });
 
+describe('портфолиа', () => {
+  // Анна: 1 BTC по 100. Тодор: 2 BTC по 200.
+  const transactions = [
+    tx('buy', '1', '100', { day: 1, portfolioId: 'anna' }),
+    tx('buy', '2', '200', { day: 2, portfolioId: 'todor' }),
+  ];
+  const quotes: Quotes = { BTC: quote('300') };
+
+  it('всяко портфолио се смята само със своите транзакции', () => {
+    const anna = computeSummary(inPortfolio(transactions, 'anna'), quotes, 'average');
+    const todor = computeSummary(inPortfolio(transactions, 'todor'), quotes, 'average');
+
+    expect(anna.totalInvested.toString()).toBe('100');
+    expect(anna.totalValue.toString()).toBe('300');
+    expect(anna.totalProfitLoss.toString()).toBe('200');
+
+    expect(todor.totalInvested.toString()).toBe('400');
+    expect(todor.totalValue.toString()).toBe('600');
+    expect(todor.totalProfitLoss.toString()).toBe('200');
+  });
+
+  it('общият изглед сумира двете и не смесва средните цени', () => {
+    const total = computeSummary(transactions, quotes, 'average');
+
+    // 3 BTC общо, себестойност (100 + 400) / 3
+    near(total.totalInvested, '500');
+    near(total.totalValue, '900');
+    near(total.totalProfitLoss, '400');
+
+    const anna = computeSummary(inPortfolio(transactions, 'anna'), quotes, 'average');
+    const todor = computeSummary(inPortfolio(transactions, 'todor'), quotes, 'average');
+
+    // Общото съвпада със сбора на двете.
+    near(total.totalValue, anna.totalValue.plus(todor.totalValue).toFixed());
+    near(total.totalProfitLoss, anna.totalProfitLoss.plus(todor.totalProfitLoss).toFixed());
+    near(total.totalInvested, anna.totalInvested.plus(todor.totalInvested).toFixed());
+  });
+
+  it('наличността на едното не покрива продажба от другото', () => {
+    // Тодор има 2 BTC; Анна има 1.
+    expect(
+      availableQuantity('BTC', inPortfolio(transactions, 'anna')).toString(),
+    ).toBe('1');
+    expect(
+      availableQuantity('BTC', inPortfolio(transactions, 'todor')).toString(),
+    ).toBe('2');
+  });
+});
+
 describe('CSV', () => {
+  const PORTFOLIOS = [
+    { id: 'anna', name: 'Анна', color: '#E879A6' },
+    { id: 'todor', name: 'Тодор', color: '#5B9DFF' },
+  ];
+
   it('преживява експорт и импорт без загуба', () => {
     const original = [
       tx('buy', '0.5', '42000.25', { fee: '3.5', day: 1 }),
       tx('sell', '0.25', '51000', { fee: '2', day: 5, asset: 'ETH' }),
     ];
 
-    const parsed = parseCsv(exportCsv(original));
+    const parsed = parseCsv(exportCsv(original, PORTFOLIOS), PORTFOLIOS, 'anna');
 
     expect(parsed.skippedLines).toHaveLength(0);
     expect(parsed.transactions).toHaveLength(2);
@@ -213,5 +293,44 @@ describe('CSV', () => {
     expect(parsed.transactions[0]!.pricePerUnit.toString()).toBe('42000.25');
     expect(parsed.transactions[1]!.asset).toBe('ETH');
     expect(parsed.transactions[1]!.type).toBe('sell');
+  });
+
+  it('запазва кое портфолио е чие', () => {
+    const original = [
+      tx('buy', '1', '100', { day: 1, portfolioId: 'anna' }),
+      tx('buy', '2', '200', { day: 2, portfolioId: 'todor' }),
+    ];
+
+    const parsed = parseCsv(exportCsv(original, PORTFOLIOS), PORTFOLIOS, 'anna');
+
+    expect(parsed.newPortfolios).toHaveLength(0);
+    expect(parsed.transactions[0]!.portfolioId).toBe('anna');
+    expect(parsed.transactions[1]!.portfolioId).toBe('todor');
+  });
+
+  it('създава липсващо портфолио вместо да губи реда', () => {
+    const csv =
+      'date,asset,type,quantity,price,fee,exchange,note,portfolio\n' +
+      '2025-01-15T10:30:00Z,BTC,buy,1,100,0,Binance,,Мария\n';
+
+    const parsed = parseCsv(csv, PORTFOLIOS, 'anna');
+
+    expect(parsed.transactions).toHaveLength(1);
+    expect(parsed.newPortfolios).toHaveLength(1);
+    expect(parsed.newPortfolios[0]!.name).toBe('Мария');
+    // Идентификаторът на новото портфолио съвпада с този на транзакцията.
+    expect(parsed.transactions[0]!.portfolioId).toBe(parsed.newPortfolios[0]!.id);
+  });
+
+  it('стар файл без колона за портфолио отива в подразбиращото се', () => {
+    const csv =
+      'date,asset,type,quantity,price,fee,exchange,note\n' +
+      '2025-01-15T10:30:00Z,BTC,buy,1,100,0,Binance,\n';
+
+    const parsed = parseCsv(csv, PORTFOLIOS, 'todor');
+
+    expect(parsed.transactions).toHaveLength(1);
+    expect(parsed.transactions[0]!.portfolioId).toBe('todor');
+    expect(parsed.newPortfolios).toHaveLength(0);
   });
 });

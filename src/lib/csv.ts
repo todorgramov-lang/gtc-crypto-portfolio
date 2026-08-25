@@ -2,21 +2,26 @@ import { parseUserNumber, ZERO } from './money';
 import { isAssetId, type AssetId } from './assets';
 import { csvNumber, csvDate } from './format';
 import { newId } from './storage';
+import { makePortfolioId, nextColor, type Portfolio } from './portfolios';
 import type { Transaction, TxType } from './types';
 
 /**
  * Import / Export на транзакции.
- * Колони: date, asset, type, quantity, price, fee, exchange, note
+ * Колони: date, asset, type, quantity, price, fee, exchange, note, portfolio
+ *
+ * Последната колона е добавена по-късно — файлове без нея се четат нормално
+ * и редовете отиват в подразбиращото се портфолио.
  */
 
-export const CSV_HEADER = 'date,asset,type,quantity,price,fee,exchange,note';
+export const CSV_HEADER = 'date,asset,type,quantity,price,fee,exchange,note,portfolio';
 
 function escapeField(field: string): string {
   if (!/[",\n]/.test(field)) return field;
   return `"${field.replace(/"/g, '""')}"`;
 }
 
-export function exportCsv(transactions: Transaction[]): string {
+export function exportCsv(transactions: Transaction[], portfolios: Portfolio[] = []): string {
+  const nameById = new Map(portfolios.map((p) => [p.id, p.name]));
   const rows = [...transactions]
     .sort((a, b) => a.date.getTime() - b.date.getTime())
     .map((tx) =>
@@ -29,6 +34,7 @@ export function exportCsv(transactions: Transaction[]): string {
         csvNumber(tx.fee),
         tx.exchange,
         tx.note ?? '',
+        nameById.get(tx.portfolioId) ?? tx.portfolioId,
       ]
         .map(escapeField)
         .join(','),
@@ -111,11 +117,46 @@ function parseDate(raw: string): Date | null {
 export interface ImportResult {
   transactions: Transaction[];
   skippedLines: number[];
+  /** Портфолиа, срещнати във файла, но липсващи в приложението. */
+  newPortfolios: Portfolio[];
 }
 
-export function parseCsv(text: string): ImportResult {
+/**
+ * Чете CSV. Последната колона е името на портфолиото — ако липсва (стари
+ * файлове), редът отива в `fallbackPortfolioId`. Непознато име създава ново
+ * портфолио, вместо да губи реда.
+ */
+export function parseCsv(
+  text: string,
+  portfolios: Portfolio[] = [],
+  fallbackPortfolioId?: string,
+): ImportResult {
   const transactions: Transaction[] = [];
   const skippedLines: number[] = [];
+
+  const known: Portfolio[] = [...portfolios];
+  const newPortfolios: Portfolio[] = [];
+  const defaultId = fallbackPortfolioId ?? known[0]?.id ?? 'anna';
+
+  function resolvePortfolio(raw: string): string {
+    const name = raw.trim();
+    if (name === '') return defaultId;
+
+    const existing = known.find(
+      (portfolio) =>
+        portfolio.name.toLowerCase() === name.toLowerCase() || portfolio.id === name,
+    );
+    if (existing) return existing.id;
+
+    const created: Portfolio = {
+      id: makePortfolioId(name, known),
+      name,
+      color: nextColor(known),
+    };
+    known.push(created);
+    newPortfolios.push(created);
+    return created.id;
+  }
 
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
 
@@ -155,10 +196,11 @@ export function parseCsv(text: string): ImportResult {
       date,
       exchange: fields[6] ?? '',
       note: note === '' ? null : note,
+      portfolioId: resolvePortfolio(fields[8] ?? ''),
     });
   });
 
-  return { transactions, skippedLines };
+  return { transactions, skippedLines, newPortfolios };
 }
 
 /**
@@ -167,6 +209,9 @@ export function parseCsv(text: string): ImportResult {
  */
 export function duplicateKey(tx: Transaction): string {
   return [
+    // Портфолиото е част от ключа — една и съща сделка при Анна и при Тодор
+    // са две различни неща, а не дубликат.
+    tx.portfolioId,
     tx.asset,
     tx.type,
     csvNumber(tx.quantity),

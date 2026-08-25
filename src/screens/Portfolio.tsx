@@ -2,6 +2,7 @@ import type { AssetId } from '../lib/assets';
 import Allocation from '../components/Allocation';
 import AssetCard, { toneClass } from '../components/AssetCard';
 import ConnectionDot from '../components/ConnectionDot';
+import PortfolioSwitcher from '../components/PortfolioSwitcher';
 import EmptyState from '../components/EmptyState';
 import FlashValue from '../components/FlashValue';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
@@ -28,7 +29,11 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
       </div>
 
       <div className="space-y-4 px-4 pb-6">
-        <header className="pt-4 text-center">
+        <div className="pt-3">
+          <PortfolioSwitcher />
+        </div>
+
+        <header className="text-center">
           <ConnectionDot />
 
           <FlashValue

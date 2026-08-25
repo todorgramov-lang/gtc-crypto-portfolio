@@ -35,6 +35,57 @@
   color-scheme: dark;
 }
 
+/**
+ * Темите просто презаписват същите променливи. Всички класове в приложението
+ * сочат към тях през var(), затова смяната е мигновена.
+ * Използваме :root[data-theme] вместо само [data-theme] заради тежестта на
+ * селектора — иначе стойностите по подразбиране може да надделеят.
+ */
+
+/* Въглен — неутрално черно, без синия оттенък. */
+:root[data-theme='charcoal'] {
+  --color-ink-900: #0d0d0f;
+  --color-ink-800: #16161a;
+  --color-ink-700: #1e1e24;
+  --color-ink-600: #2a2a32;
+  --color-ink-500: #3c3c46;
+  --color-fg: #ececef;
+  --color-fg-muted: #9a9aa4;
+  --color-fg-faint: #6b6b75;
+}
+
+/* Топла — тъмно кафяво, по-меко за вечер. */
+:root[data-theme='warm'] {
+  --color-ink-900: #14100c;
+  --color-ink-800: #1e1813;
+  --color-ink-700: #29211a;
+  --color-ink-600: #372c22;
+  --color-ink-500: #4a3b2e;
+  --color-fg: #f2ebe2;
+  --color-fg-muted: #b3a695;
+  --color-fg-faint: #857a6c;
+}
+
+/* Светла — за дневна светлина. Тук „ink-900" е фонът, тоест почти бяло. */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-ink-900: #f6f7f9;
+  --color-ink-800: #ffffff;
+  --color-ink-700: #eef1f5;
+  --color-ink-600: #dfe4ea;
+  --color-ink-500: #c7cdd6;
+  --color-fg: #0f172a;
+  --color-fg-muted: #475569;
+  --color-fg-faint: #7a8699;
+
+  /* По-наситени, за да имат контраст върху бяло. */
+  --color-profit: #00a344;
+  --color-loss: #dc2626;
+  --color-flat: #6b7280;
+  --color-warn: #b45309;
+}
+
 html,
 body,
 #root {

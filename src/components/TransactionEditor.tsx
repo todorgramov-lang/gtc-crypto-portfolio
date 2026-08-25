@@ -47,15 +47,27 @@ export default function TransactionEditor({ mode, onClose }: Props) {
     editing?.exchange ?? app.transactions[0]?.exchange ?? '',
   );
   const [note, setNote] = useState(editing?.note ?? '');
+  const [portfolioId, setPortfolioId] = useState(
+    editing?.portfolioId ?? app.defaultPortfolioId,
+  );
   const [saving, setSaving] = useState(false);
 
   const quantity = parseUserNumber(quantityText);
   const pricePerUnit = parseUserNumber(priceText);
   const fee = parseUserNumber(feeText) ?? ZERO;
 
+  /**
+   * Наличността е на портфолиото, в което влиза сделката — не на общото.
+   * Анна не може да продаде от монетите на Тодор.
+   */
   const available = useMemo(
-    () => availableQuantity(asset, app.transactions, editing?.id),
-    [asset, app.transactions, editing?.id],
+    () =>
+      availableQuantity(
+        asset,
+        app.allTransactions.filter((tx) => tx.portfolioId === portfolioId),
+        editing?.id,
+      ),
+    [asset, app.allTransactions, portfolioId, editing?.id],
   );
 
   const marketPrice = app.feed.quotes[asset]?.price ?? null;
@@ -95,6 +107,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
       date: new Date(dateText),
       exchange: exchange.trim(),
       note: note.trim() === '' ? null : note.trim(),
+      portfolioId,
     };
 
     if (editing) await app.updateTransaction(transaction);
@@ -131,6 +144,36 @@ export default function TransactionEditor({ mode, onClose }: Props) {
         </header>
 
         <div className="space-y-5 px-4 py-4">
+          {app.portfolios.length > 1 && (
+            <Field label="Портфолио">
+              <div className="grid grid-cols-2 gap-1.5">
+                {app.portfolios.map((portfolio) => {
+                  const active = portfolioId === portfolio.id;
+
+                  return (
+                    <button
+                      key={portfolio.id}
+                      type="button"
+                      onClick={() => setPortfolioId(portfolio.id)}
+                      className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-medium transition ${
+                        active ? 'text-ink-900' : 'bg-ink-700 text-fg-muted'
+                      }`}
+                      style={active ? { backgroundColor: portfolio.color } : undefined}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{
+                          backgroundColor: active ? 'rgb(0 0 0 / 0.35)' : portfolio.color,
+                        }}
+                      />
+                      {portfolio.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          )}
+
           <Field label="Актив">
             <div className="grid grid-cols-4 gap-1.5">
               {ASSET_IDS.map((id) => (
