@@ -116,7 +116,7 @@ export const DEFAULT_SETTINGS: Settings = {
   priceFlash: true,
   theme: 'midnight',
   selection: 'all',
-  goldUnit: 'g',
+  goldUnit: 'oz',
 };
 
 export type ChartRange = '24h' | '7d' | '30d' | '1y';

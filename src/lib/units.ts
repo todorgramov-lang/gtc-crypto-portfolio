@@ -19,8 +19,8 @@ export type GoldUnit = 'oz' | 'g';
 export const GRAMS_PER_TROY_OUNCE = '31.1034768';
 
 export const GOLD_UNITS: Array<{ id: GoldUnit; label: string; name: string }> = [
-  { id: 'g', label: 'г', name: 'Грамове' },
   { id: 'oz', label: 'oz', name: 'Тройунции' },
+  { id: 'g', label: 'г', name: 'Грамове' },
 ];
 
 /**

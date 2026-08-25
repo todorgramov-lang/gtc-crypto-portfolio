@@ -114,7 +114,11 @@ export async function loadSettings(): Promise<Settings> {
     priceFlash: raw.priceFlash !== false,
     theme,
     selection: typeof raw.selection === 'string' ? raw.selection : 'all',
-    goldUnit: raw.goldUnit === 'oz' ? 'oz' : 'g',
+    // Само изричен избор надделява; всичко друго пада на подразбиращото се.
+    goldUnit:
+      raw.goldUnit === 'oz' || raw.goldUnit === 'g'
+        ? raw.goldUnit
+        : DEFAULT_SETTINGS.goldUnit,
   };
 }
 
