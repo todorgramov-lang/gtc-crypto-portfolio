@@ -32,7 +32,7 @@ export default function AssetCard({ holding, formatter, flashEnabled, onOpen }: 
     >
       <div className="flex items-center gap-2.5">
         <span
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[13px] font-bold"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[15px] font-bold"
           style={{ backgroundColor: `${info.tint}1f`, color: info.tint }}
         >
           {holding.asset.slice(0, 1)}
@@ -42,7 +42,7 @@ export default function AssetCard({ holding, formatter, flashEnabled, onOpen }: 
           <span className="num block text-[15px] font-semibold leading-tight">
             {holding.asset}
           </span>
-          <span className="block truncate text-[11px] leading-tight text-fg-faint">
+          <span className="block truncate text-[13px] leading-tight text-fg-faint">
             {info.name}
           </span>
         </span>
@@ -52,17 +52,22 @@ export default function AssetCard({ holding, formatter, flashEnabled, onOpen }: 
             value={holding.currentPrice}
             text={formatter.price(holding.currentPrice, holding.asset)}
             enabled={flashEnabled}
-            className="block text-sm font-medium"
+            className="block text-base font-medium"
           />
           <span
-            className={`num block text-[11px] ${toneClass(holding.change24hPercent)}`}
+            className={`num block text-[13px] ${toneClass(holding.change24hPercent)}`}
           >
             {formatter.signedPercent(holding.change24hPercent)}
           </span>
         </span>
       </div>
 
-      <div className="mt-3 border-t border-ink-600/50 pt-2.5">
+      {/*
+        При по-едрия шрифт трите показателя не се събират на един ред върху
+        375 пиксела, затова печалбата/загубата е на свой ред отдолу — там има
+        място и за сумата, и за процента.
+      */}
+      <div className="mt-3 space-y-2 border-t border-ink-600/50 pt-2.5">
         <div className="flex items-start justify-between gap-3">
           <Metric label="Наличност">
             {formatter.quantity(holding.quantity, holding.asset)}
@@ -71,15 +76,22 @@ export default function AssetCard({ holding, formatter, flashEnabled, onOpen }: 
           <Metric label="Стойност" align="right">
             {formatter.money(holding.currentValue)}
           </Metric>
+        </div>
 
-          <Metric label="П/З" align="right">
-            <span className={toneClass(holding.unrealizedProfitLoss)}>
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-xs text-fg-faint">Печалба / загуба</span>
+          <span
+            className={`num flex items-baseline gap-2 ${toneClass(
+              holding.unrealizedProfitLoss,
+            )}`}
+          >
+            <span className="text-sm font-medium">
               {formatter.signedMoney(holding.unrealizedProfitLoss)}
-              <span className="ml-1 text-[10px]">
-                {formatter.signedPercent(holding.unrealizedProfitLossPercent)}
-              </span>
             </span>
-          </Metric>
+            <span className="text-xs">
+              {formatter.signedPercent(holding.unrealizedProfitLossPercent)}
+            </span>
+          </span>
         </div>
       </div>
     </button>
@@ -97,8 +109,8 @@ function Metric({
 }) {
   return (
     <span className={`min-w-0 ${align === 'right' ? 'text-right' : ''}`}>
-      <span className="block text-[10px] leading-tight text-fg-faint">{label}</span>
-      <span className="num block truncate text-xs leading-tight">{children}</span>
+      <span className="block text-xs leading-tight text-fg-faint">{label}</span>
+      <span className="num block truncate text-sm leading-tight">{children}</span>
     </span>
   );
 }

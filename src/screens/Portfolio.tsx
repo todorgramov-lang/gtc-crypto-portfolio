@@ -22,7 +22,7 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
   return (
     <div ref={containerRef} className="h-full overflow-y-auto overscroll-contain">
       <div
-        className="grid place-items-center overflow-hidden text-[11px] text-fg-faint transition-[height]"
+        className="grid place-items-center overflow-hidden text-[13px] text-fg-faint transition-[height]"
         style={{ height: refreshing ? 28 : pull }}
       >
         {refreshing ? 'Обновяване…' : pull > 0 ? 'Пусни за обновяване' : ''}
@@ -40,11 +40,11 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
             value={summary.totalValue}
             text={formatter.money(summary.totalValue)}
             enabled={settings.priceFlash}
-            className="mt-3 block text-[34px] font-bold leading-none"
+            className="mt-3 block text-[36px] font-bold leading-none"
           />
 
           <div
-            className={`mt-2 flex items-center justify-center gap-2 text-sm font-semibold ${toneClass(
+            className={`mt-2 flex items-center justify-center gap-2 text-base font-semibold ${toneClass(
               summary.totalProfitLoss,
             )}`}
           >
@@ -55,7 +55,7 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
           </div>
 
           <div
-            className={`mt-1 flex items-center justify-center gap-1.5 text-xs ${toneClass(
+            className={`mt-1 flex items-center justify-center gap-1.5 text-sm ${toneClass(
               summary.change24hValue,
             )}`}
           >
@@ -68,7 +68,7 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
           </div>
 
           {!summary.totalRealizedProfitLoss.isZero() && (
-            <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[11px]">
+            <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[13px]">
               <span className="text-fg-faint">Реализирана П/З</span>
               <span className={`num ${toneClass(summary.totalRealizedProfitLoss)}`}>
                 {formatter.signedMoney(summary.totalRealizedProfitLoss)}

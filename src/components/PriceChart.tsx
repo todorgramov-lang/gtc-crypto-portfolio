@@ -148,7 +148,7 @@ export default function PriceChart({
       */}
       {geometry.currentY !== null && currentPriceLabel && (
         <span
-          className="num pointer-events-none absolute right-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium"
+          className="num pointer-events-none absolute right-0 -translate-y-1/2 rounded px-1.5 py-0.5 text-xs font-medium"
           style={{
             top: `${(geometry.currentY / HEIGHT) * 100}%`,
             color: stroke,
@@ -161,7 +161,7 @@ export default function PriceChart({
 
       {geometry.averageY !== null && averageCostLabel && (
         <span
-          className="num pointer-events-none absolute left-0 -translate-y-1/2 rounded bg-warn/15 px-1.5 py-0.5 text-[10px] text-warn"
+          className="num pointer-events-none absolute left-0 -translate-y-1/2 rounded bg-warn/15 px-1.5 py-0.5 text-xs text-warn"
           style={{ top: `${(geometry.averageY / HEIGHT) * 100}%` }}
         >
           средна {averageCostLabel}
@@ -173,7 +173,7 @@ export default function PriceChart({
 
 function Placeholder({ children }: { children: ReactNode }) {
   return (
-    <div className="grid h-40 place-items-center rounded-xl bg-ink-700/40 px-4 text-center text-xs text-fg-faint">
+    <div className="grid h-40 place-items-center rounded-xl bg-ink-700/40 px-4 text-center text-sm text-fg-faint">
       {children}
     </div>
   );

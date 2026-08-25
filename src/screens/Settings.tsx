@@ -68,7 +68,7 @@ export default function Settings() {
   return (
     <div className="h-full overflow-y-auto overscroll-contain">
       <header className="sticky top-0 z-10 border-b border-ink-700 bg-ink-900/95 px-4 py-2.5 backdrop-blur">
-        <h1 className="text-sm font-semibold">Настройки</h1>
+        <h1 className="text-base font-semibold">Настройки</h1>
       </header>
 
       <div className="space-y-5 px-4 py-4">
@@ -83,7 +83,7 @@ export default function Settings() {
             onChange={(currency) => updateSettings({ currency })}
           />
 
-          <p className="px-1 pb-1 text-[10px] leading-relaxed text-fg-faint">
+          <p className="px-1 pb-1 text-xs leading-relaxed text-fg-faint">
             Изчисленията се водят в USD и се конвертират при показване. Текущ курс:
             1 USD = <span className="num">{money(eurPerUsd, 'EUR', 4)}</span>.
           </p>
@@ -126,8 +126,8 @@ export default function Settings() {
                       />
                     ))}
                   </span>
-                  <span className="text-xs font-medium">{theme.name}</span>
-                  {active && <span className="ml-auto text-[11px] text-profit">✓</span>}
+                  <span className="text-sm font-medium">{theme.name}</span>
+                  {active && <span className="ml-auto text-[13px] text-profit">✓</span>}
                 </button>
               );
             })}
@@ -143,7 +143,7 @@ export default function Settings() {
             if (isConfirming) {
               return (
                 <div key={portfolio.id} className="rounded-xl bg-loss/10 p-3">
-                  <p className="text-[11px] text-loss">
+                  <p className="text-[13px] text-loss">
                     Изтриването на „{portfolio.name}" ще махне и{' '}
                     {count === 1 ? 'неговата 1 транзакция' : `неговите ${count} транзакции`}.
                     Няма връщане назад.
@@ -156,14 +156,14 @@ export default function Settings() {
                         setConfirmingPortfolioDelete(null);
                         setMessage(`Портфолио „${portfolio.name}" е изтрито.`);
                       }}
-                      className="rounded-lg bg-loss px-3 py-1.5 text-[11px] font-semibold text-white"
+                      className="rounded-lg bg-loss px-3 py-1.5 text-[13px] font-semibold text-white"
                     >
                       Да, изтрий
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmingPortfolioDelete(null)}
-                      className="rounded-lg bg-ink-600 px-3 py-1.5 text-[11px] text-fg-muted"
+                      className="rounded-lg bg-ink-600 px-3 py-1.5 text-[13px] text-fg-muted"
                     >
                       Отказ
                     </button>
@@ -211,14 +211,14 @@ export default function Settings() {
                         void updatePortfolio({ ...editingPortfolio, name });
                         setEditingPortfolio(null);
                       }}
-                      className="rounded-lg bg-fg px-3 py-1.5 text-[11px] font-semibold text-ink-900"
+                      className="rounded-lg bg-fg px-3 py-1.5 text-[13px] font-semibold text-ink-900"
                     >
                       Запази
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingPortfolio(null)}
-                      className="rounded-lg bg-ink-600 px-3 py-1.5 text-[11px] text-fg-muted"
+                      className="rounded-lg bg-ink-600 px-3 py-1.5 text-[13px] text-fg-muted"
                     >
                       Отказ
                     </button>
@@ -234,8 +234,8 @@ export default function Settings() {
                   style={{ backgroundColor: portfolio.color }}
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs">{portfolio.name}</span>
-                  <span className="num block text-[10px] text-fg-faint">
+                  <span className="block truncate text-sm">{portfolio.name}</span>
+                  <span className="num block text-xs text-fg-faint">
                     {count === 1 ? '1 транзакция' : `${count} транзакции`}
                   </span>
                 </span>
@@ -243,7 +243,7 @@ export default function Settings() {
                 <button
                   type="button"
                   onClick={() => setEditingPortfolio(portfolio)}
-                  className="rounded-lg px-2 py-1 text-[11px] text-fg-muted"
+                  className="rounded-lg px-2 py-1 text-[13px] text-fg-muted"
                 >
                   Промени
                 </button>
@@ -253,7 +253,7 @@ export default function Settings() {
                     type="button"
                     onClick={() => setConfirmingPortfolioDelete(portfolio.id)}
                     aria-label={`Изтрий ${portfolio.name}`}
-                    className="rounded-lg px-2 py-1 text-[11px] text-fg-faint"
+                    className="rounded-lg px-2 py-1 text-[13px] text-fg-faint"
                   >
                     ✕
                   </button>
@@ -277,13 +277,13 @@ export default function Settings() {
                 void addPortfolio(newPortfolioName.trim(), nextColor(portfolios));
                 setNewPortfolioName('');
               }}
-              className="shrink-0 rounded-xl bg-fg px-3.5 text-xs font-semibold text-ink-900 disabled:opacity-40"
+              className="shrink-0 rounded-xl bg-fg px-3.5 text-sm font-semibold text-ink-900 disabled:opacity-40"
             >
               Добави
             </button>
           </div>
 
-          <p className="px-1 text-[10px] leading-relaxed text-fg-faint">
+          <p className="px-1 text-xs leading-relaxed text-fg-faint">
             Всяка транзакция принадлежи на едно портфолио. От началния екран
             превключваш кое гледаш, а „Общо" сумира всички.
           </p>
@@ -300,7 +300,7 @@ export default function Settings() {
             onChange={(costBasis) => updateSettings({ costBasis })}
           />
 
-          <p className="px-1 pb-1 text-[10px] leading-relaxed text-fg-faint">
+          <p className="px-1 pb-1 text-xs leading-relaxed text-fg-faint">
             Методът влияе върху средната цена, инвестираната сума и реализираната
             печалба/загуба.
           </p>
@@ -327,7 +327,7 @@ export default function Settings() {
 
           {confirmingDelete ? (
             <div className="rounded-xl bg-loss/10 p-3">
-              <p className="text-[11px] text-loss">
+              <p className="text-[13px] text-loss">
                 Това ще изтрие всички {allTransactions.length} транзакции безвъзвратно.
               </p>
               <div className="mt-2 flex gap-2">
@@ -338,14 +338,14 @@ export default function Settings() {
                     setConfirmingDelete(false);
                     setMessage('Всички транзакции са изтрити.');
                   }}
-                  className="rounded-lg bg-loss px-3 py-1.5 text-[11px] font-semibold text-white"
+                  className="rounded-lg bg-loss px-3 py-1.5 text-[13px] font-semibold text-white"
                 >
                   Да, изтрий
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmingDelete(false)}
-                  className="rounded-lg bg-ink-600 px-3 py-1.5 text-[11px] text-fg-muted"
+                  className="rounded-lg bg-ink-600 px-3 py-1.5 text-[13px] text-fg-muted"
                 >
                   Отказ
                 </button>
@@ -361,7 +361,7 @@ export default function Settings() {
             </Row>
           )}
 
-          <p className="px-1 text-[10px] leading-relaxed text-fg-faint">
+          <p className="px-1 text-xs leading-relaxed text-fg-faint">
             Колони: date, asset, type, quantity, price, fee, exchange, note.
           </p>
         </Group>
@@ -369,7 +369,7 @@ export default function Settings() {
         <Group title="Информация">
           <Info label="Брой транзакции" value={String(allTransactions.length)} />
           <Info label="Версия" value={__BUILD_STAMP__} />
-          <p className="px-1 pt-1 text-[10px] leading-relaxed text-fg-faint">
+          <p className="px-1 pt-1 text-xs leading-relaxed text-fg-faint">
             Приложението не дава инвестиционни съвети, прогнози или сигнали. Данните
             остават на устройството — нищо не се изпраща навън освен заявките за цени
             към Binance, Hyperliquid и CoinGecko.
@@ -378,7 +378,7 @@ export default function Settings() {
       </div>
 
       {message && (
-        <div className="fixed inset-x-4 bottom-24 z-50 rounded-xl bg-ink-600 px-4 py-3 text-center text-xs shadow-lg">
+        <div className="fixed inset-x-4 bottom-24 z-50 rounded-xl bg-ink-600 px-4 py-3 text-center text-sm shadow-lg">
           {message}
           <button
             type="button"
@@ -396,7 +396,7 @@ export default function Settings() {
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-fg-faint">
+      <h2 className="mb-1.5 px-1 text-[13px] font-medium uppercase tracking-wide text-fg-faint">
         {title}
       </h2>
       <div className="space-y-2 rounded-2xl border border-ink-600/60 bg-ink-800/60 p-3">
@@ -419,14 +419,14 @@ function Segmented<T extends string>({
 }) {
   return (
     <div>
-      <span className="mb-1.5 block px-1 text-[11px] text-fg-muted">{label}</span>
+      <span className="mb-1.5 block px-1 text-[13px] text-fg-muted">{label}</span>
       <div className="grid grid-cols-2 gap-1 rounded-xl bg-ink-700/60 p-1">
         {options.map((option) => (
           <button
             key={option.value}
             type="button"
             onClick={() => onChange(option.value)}
-            className={`rounded-lg py-1.5 text-[11px] font-medium transition ${
+            className={`rounded-lg py-1.5 text-[13px] font-medium transition ${
               value === option.value ? 'bg-ink-500 text-fg' : 'text-fg-muted'
             }`}
           >
@@ -458,8 +458,8 @@ function Toggle({
       className="flex w-full items-center gap-3 rounded-xl px-1 py-1.5 text-left"
     >
       <span className="min-w-0 flex-1">
-        <span className="block text-xs">{label}</span>
-        {hint && <span className="block text-[10px] text-fg-faint">{hint}</span>}
+        <span className="block text-sm">{label}</span>
+        {hint && <span className="block text-xs text-fg-faint">{hint}</span>}
       </span>
 
       <span
@@ -493,7 +493,7 @@ function Row({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`w-full rounded-xl px-1 py-2 text-left text-xs transition disabled:opacity-40 ${
+      className={`w-full rounded-xl px-1 py-2 text-left text-sm transition disabled:opacity-40 ${
         tone === 'loss' ? 'text-loss' : ''
       }`}
     >
@@ -505,8 +505,8 @@ function Row({
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between px-1 py-1.5">
-      <span className="text-xs text-fg-muted">{label}</span>
-      <span className="num text-xs">{value}</span>
+      <span className="text-sm text-fg-muted">{label}</span>
+      <span className="num text-sm">{value}</span>
     </div>
   );
 }

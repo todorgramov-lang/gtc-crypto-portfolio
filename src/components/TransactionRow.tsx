@@ -52,7 +52,7 @@ export default function TransactionRow({
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
       >
         <span
-          className={`num grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm ${
+          className={`num grid h-7 w-7 shrink-0 place-items-center rounded-full text-base ${
             inflow ? 'bg-profit/12 text-profit' : 'bg-loss/12 text-loss'
           }`}
           aria-hidden
@@ -68,15 +68,15 @@ export default function TransactionRow({
                 style={{ backgroundColor: owner.color }}
               />
             )}
-            <span className="text-[13px] font-medium">{TYPE_LABEL[transaction.type]}</span>
+            <span className="text-[15px] font-medium">{TYPE_LABEL[transaction.type]}</span>
             {showAsset && (
-              <span className="num text-[13px] font-semibold" style={{ color: info.tint }}>
+              <span className="num text-[15px] font-semibold" style={{ color: info.tint }}>
                 {transaction.asset}
               </span>
             )}
           </span>
 
-          <span className="block truncate text-[11px] text-fg-faint">
+          <span className="block truncate text-[13px] text-fg-faint">
             {owner && `${owner.name} · `}
             {formatDate(transaction.date)}
             {transaction.exchange && ` · ${transaction.exchange}`}
@@ -86,14 +86,14 @@ export default function TransactionRow({
 
         <span className="shrink-0 text-right">
           <span
-            className={`num block text-[13px] font-medium ${
+            className={`num block text-[15px] font-medium ${
               inflow ? 'text-profit' : 'text-loss'
             }`}
           >
             {inflow ? '+' : '−'}
             {formatter.quantity(transaction.quantity, transaction.asset)}
           </span>
-          <span className="num block text-[11px] text-fg-faint">
+          <span className="num block text-[13px] text-fg-faint">
             {formatter.price(transaction.pricePerUnit, transaction.asset)}
           </span>
         </span>

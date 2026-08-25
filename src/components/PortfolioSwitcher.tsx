@@ -16,7 +16,7 @@ export default function PortfolioSwitcher() {
       <button
         type="button"
         onClick={() => setSelection(ALL_PORTFOLIOS)}
-        className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
+        className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
           selection === ALL_PORTFOLIOS
             ? 'bg-fg text-ink-900'
             : 'bg-ink-700 text-fg-muted'
@@ -33,7 +33,7 @@ export default function PortfolioSwitcher() {
             key={portfolio.id}
             type="button"
             onClick={() => setSelection(portfolio.id)}
-            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition ${
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
               active ? 'text-ink-900' : 'bg-ink-700 text-fg-muted'
             }`}
             style={active ? { backgroundColor: portfolio.color } : undefined}

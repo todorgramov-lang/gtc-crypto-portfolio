@@ -27,7 +27,7 @@ export default function App() {
 
   if (!ready) {
     return (
-      <div className="grid h-full place-items-center text-xs text-fg-faint">
+      <div className="grid h-full place-items-center text-sm text-fg-faint">
         Зареждане…
       </div>
     );
@@ -68,11 +68,11 @@ export default function App() {
                 key={item.id}
                 type="button"
                 onClick={() => setTab(item.id)}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] transition ${
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition ${
                   tab === item.id ? 'text-fg' : 'text-fg-faint'
                 }`}
               >
-                <span className="text-base leading-none" aria-hidden>
+                <span className="text-lg leading-none" aria-hidden>
                   {item.glyph}
                 </span>
                 {item.label}
@@ -88,7 +88,7 @@ export default function App() {
           type="button"
           onClick={() => updateSettings({ privacyMode: !settings.privacyMode })}
           aria-label={settings.privacyMode ? 'Покажи сумите' : 'Скрий сумите'}
-          className="fixed right-4 top-[calc(env(safe-area-inset-top)+0.5rem)] z-20 grid h-9 w-9 place-items-center rounded-full bg-ink-700/80 text-sm backdrop-blur"
+          className="fixed right-4 top-[calc(env(safe-area-inset-top)+0.5rem)] z-20 grid h-9 w-9 place-items-center rounded-full bg-ink-700/80 text-base backdrop-blur"
         >
           {settings.privacyMode ? '🙈' : '👁'}
         </button>
@@ -99,7 +99,7 @@ export default function App() {
           type="button"
           onClick={() => setEditor({ kind: 'create' })}
           aria-label="Добави транзакция"
-          className="fixed left-4 top-[calc(env(safe-area-inset-top)+0.5rem)] z-20 grid h-9 w-9 place-items-center rounded-full bg-ink-700/80 text-lg leading-none backdrop-blur"
+          className="fixed left-4 top-[calc(env(safe-area-inset-top)+0.5rem)] z-20 grid h-9 w-9 place-items-center rounded-full bg-ink-700/80 text-xl leading-none backdrop-blur"
         >
           +
         </button>
@@ -110,8 +110,8 @@ export default function App() {
       {pendingDelete && (
         <div className="fixed inset-0 z-50 grid place-items-end bg-black/60 p-4 backdrop-blur-sm">
           <div className="pb-safe w-full rounded-2xl bg-ink-800 p-4">
-            <p className="text-sm font-medium">Да изтрия ли тази транзакция?</p>
-            <p className="mt-1 text-xs text-fg-muted">Действието е необратимо.</p>
+            <p className="text-base font-medium">Да изтрия ли тази транзакция?</p>
+            <p className="mt-1 text-sm text-fg-muted">Действието е необратимо.</p>
 
             <div className="mt-4 flex gap-2">
               <button
@@ -120,14 +120,14 @@ export default function App() {
                   void deleteTransaction(pendingDelete.id);
                   setPendingDelete(null);
                 }}
-                className="flex-1 rounded-xl bg-loss py-2.5 text-xs font-semibold text-white"
+                className="flex-1 rounded-xl bg-loss py-2.5 text-sm font-semibold text-white"
               >
                 Изтрий
               </button>
               <button
                 type="button"
                 onClick={() => setPendingDelete(null)}
-                className="flex-1 rounded-xl bg-ink-600 py-2.5 text-xs text-fg-muted"
+                className="flex-1 rounded-xl bg-ink-600 py-2.5 text-sm text-fg-muted"
               >
                 Отказ
               </button>

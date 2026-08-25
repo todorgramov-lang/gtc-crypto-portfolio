@@ -87,13 +87,13 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
   return (
     <div className="h-full overflow-y-auto overscroll-contain">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-700 bg-ink-900/95 px-2 py-2.5 backdrop-blur">
-        <button type="button" onClick={onBack} className="px-2 py-1 text-sm text-fg-muted">
+        <button type="button" onClick={onBack} className="px-2 py-1 text-base text-fg-muted">
           ‹ Назад
         </button>
-        <span className="num text-sm font-semibold" style={{ color: info.tint }}>
+        <span className="num text-base font-semibold" style={{ color: info.tint }}>
           {asset}
         </span>
-        <button type="button" onClick={onAdd} className="px-3 py-1 text-lg leading-none">
+        <button type="button" onClick={onAdd} className="px-3 py-1 text-xl leading-none">
           +
         </button>
       </header>
@@ -104,11 +104,11 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
             value={holding.currentPrice}
             text={formatter.price(holding.currentPrice, asset)}
             enabled={settings.priceFlash}
-            className="block text-[28px] font-bold leading-none"
+            className="block text-[30px] font-bold leading-none"
           />
 
           <div
-            className={`mt-1.5 flex items-center justify-center gap-1.5 text-xs ${toneClass(
+            className={`mt-1.5 flex items-center justify-center gap-1.5 text-sm ${toneClass(
               holding.change24hPercent,
             )}`}
           >
@@ -120,7 +120,7 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
           </div>
 
           {quote && (
-            <p className="mt-1 text-[10px] text-fg-faint">{SOURCE_LABEL[quote.source]}</p>
+            <p className="mt-1 text-xs text-fg-faint">{SOURCE_LABEL[quote.source]}</p>
           )}
         </section>
 
@@ -131,7 +131,7 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
                 key={value}
                 type="button"
                 onClick={() => setRange(value)}
-                className={`num rounded-lg py-1.5 text-[11px] font-medium transition ${
+                className={`num rounded-lg py-1.5 text-[13px] font-medium transition ${
                   range === value ? 'bg-ink-500 text-fg' : 'text-fg-muted'
                 }`}
               >
@@ -183,10 +183,10 @@ export default function AssetDetail({ asset, onBack, onEdit, onAdd, onDelete }: 
         </section>
 
         <section>
-          <h2 className="mb-1 px-1 text-xs font-medium text-fg-muted">Транзакции</h2>
+          <h2 className="mb-1 px-1 text-sm font-medium text-fg-muted">Транзакции</h2>
 
           {own.length === 0 ? (
-            <p className="px-1 py-3 text-xs text-fg-faint">
+            <p className="px-1 py-3 text-sm text-fg-faint">
               Още няма транзакции по този актив.
             </p>
           ) : (
@@ -226,8 +226,8 @@ function Metric({
         last ? '' : 'border-b border-ink-700/60'
       }`}
     >
-      <span className="text-xs text-fg-muted">{label}</span>
-      <span className={`num text-right text-[13px] font-medium ${tone ?? ''}`}>{value}</span>
+      <span className="text-sm text-fg-muted">{label}</span>
+      <span className={`num text-right text-[15px] font-medium ${tone ?? ''}`}>{value}</span>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function ConnectionDot() {
   const dot = DOT[feed.status];
 
   return (
-    <div className="flex items-center justify-center gap-2 text-[11px] text-fg-faint">
+    <div className="flex items-center justify-center gap-2 text-[13px] text-fg-faint">
       <span className="relative flex h-2 w-2">
         {feed.status === 'live' && (
           <span

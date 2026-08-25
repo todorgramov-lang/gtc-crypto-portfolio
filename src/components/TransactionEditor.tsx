@@ -127,17 +127,17 @@ export default function TransactionEditor({ mode, onClose }: Props) {
 
       <div className="pb-safe max-h-[92vh] overflow-y-auto rounded-t-3xl border-t border-ink-600 bg-ink-800">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-700 bg-ink-800/95 px-4 py-3 backdrop-blur">
-          <button type="button" onClick={onClose} className="text-sm text-fg-muted">
+          <button type="button" onClick={onClose} className="text-base text-fg-muted">
             Отказ
           </button>
-          <h2 className="text-sm font-semibold">
+          <h2 className="text-base font-semibold">
             {editing ? 'Редакция' : 'Нова транзакция'}
           </h2>
           <button
             type="button"
             onClick={handleSave}
             disabled={error !== null || saving}
-            className="text-sm font-semibold text-profit disabled:text-fg-faint"
+            className="text-base font-semibold text-profit disabled:text-fg-faint"
           >
             Запази
           </button>
@@ -155,7 +155,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                       key={portfolio.id}
                       type="button"
                       onClick={() => setPortfolioId(portfolio.id)}
-                      className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-medium transition ${
+                      className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-medium transition ${
                         active ? 'text-ink-900' : 'bg-ink-700 text-fg-muted'
                       }`}
                       style={active ? { backgroundColor: portfolio.color } : undefined}
@@ -181,7 +181,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                   key={id}
                   type="button"
                   onClick={() => setAsset(id)}
-                  className={`num rounded-xl py-2 text-xs font-semibold transition ${
+                  className={`num rounded-xl py-2 text-sm font-semibold transition ${
                     asset === id ? 'text-ink-900' : 'bg-ink-700 text-fg-muted'
                   }`}
                   style={asset === id ? { backgroundColor: assetInfo(id).tint } : undefined}
@@ -199,7 +199,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                   key={value}
                   type="button"
                   onClick={() => setType(value)}
-                  className={`rounded-xl py-2 text-xs font-medium transition ${
+                  className={`rounded-xl py-2 text-sm font-medium transition ${
                     type === value ? 'bg-fg text-ink-900' : 'bg-ink-700 text-fg-muted'
                   }`}
                 >
@@ -233,7 +233,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                     csvNumber(marketPrice.toDecimalPlaces(assetInfo(asset).priceDecimals)),
                   )
                 }
-                className="mt-1.5 flex w-full items-center justify-between rounded-lg bg-ink-700/60 px-3 py-2 text-[11px] text-fg-muted"
+                className="mt-1.5 flex w-full items-center justify-between rounded-lg bg-ink-700/60 px-3 py-2 text-[13px] text-fg-muted"
               >
                 <span>Използвай текущата цена</span>
                 <span className="num">{money(marketPrice, 'USD', assetInfo(asset).priceDecimals)}</span>
@@ -251,15 +251,15 @@ export default function TransactionEditor({ mode, onClose }: Props) {
 
           <div className="rounded-xl bg-ink-700/50 px-3 py-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-fg-muted">Обща стойност</span>
-              <span className="num text-sm font-semibold">{money(total, 'USD')}</span>
+              <span className="text-sm text-fg-muted">Обща стойност</span>
+              <span className="num text-base font-semibold">{money(total, 'USD')}</span>
             </div>
 
             {isOutflow(type) && (
               <div className="mt-1.5 flex items-center justify-between">
-                <span className="text-[11px] text-fg-faint">Налично</span>
+                <span className="text-[13px] text-fg-faint">Налично</span>
                 <span
-                  className={`num text-[11px] ${available.gt(0) ? 'text-fg-muted' : 'text-loss'}`}
+                  className={`num text-[13px] ${available.gt(0) ? 'text-fg-muted' : 'text-loss'}`}
                 >
                   {quantityWithSymbol(available, asset)}
                 </span>
@@ -268,7 +268,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
           </div>
 
           {error && (
-            <p className="rounded-lg bg-loss/10 px-3 py-2 text-[11px] text-loss">{error}</p>
+            <p className="rounded-lg bg-loss/10 px-3 py-2 text-[13px] text-loss">{error}</p>
           )}
 
           <Field label="Дата">
@@ -296,7 +296,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
                     key={name}
                     type="button"
                     onClick={() => setExchange(name)}
-                    className="shrink-0 rounded-full bg-ink-600/70 px-3 py-1 text-[11px] text-fg-muted"
+                    className="shrink-0 rounded-full bg-ink-600/70 px-3 py-1 text-[13px] text-fg-muted"
                   >
                     {name}
                   </button>
@@ -323,7 +323,7 @@ export default function TransactionEditor({ mode, onClose }: Props) {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-medium text-fg-muted">{label}</span>
+      <span className="mb-1.5 block text-[13px] font-medium text-fg-muted">{label}</span>
       {children}
     </label>
   );
@@ -353,7 +353,7 @@ function NumberField({
           placeholder={placeholder}
           className="num w-full bg-transparent py-2.5 text-right text-fg outline-none placeholder:text-fg-faint"
         />
-        <span className="num ml-2 shrink-0 text-xs text-fg-faint">{suffix}</span>
+        <span className="num ml-2 shrink-0 text-sm text-fg-faint">{suffix}</span>
       </div>
     </Field>
   );
