@@ -107,6 +107,8 @@ export interface Settings {
   selection: PortfolioSelection;
   /** В какво се мери златото при показване и въвеждане. */
   goldUnit: GoldUnit;
+  /** Показва само една борса; null означава всички. */
+  exchangeFilter: string | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -117,6 +119,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'midnight',
   selection: 'all',
   goldUnit: 'oz',
+  exchangeFilter: null,
 };
 
 export type ChartRange = '24h' | '7d' | '30d' | '1y';

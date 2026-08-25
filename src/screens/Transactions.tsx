@@ -5,6 +5,7 @@ import { formatMonth, monthKey } from '../lib/format';
 import type { Transaction, TxType } from '../lib/types';
 import EmptyState from '../components/EmptyState';
 import TransactionRow, { TYPE_LABEL } from '../components/TransactionRow';
+import ExchangeSwitcher from '../components/ExchangeSwitcher';
 import { useApp } from '../store';
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export default function Transactions({ onEdit, onAdd, onDelete }: Props) {
-  const { transactions, formatter } = useApp();
+  const { transactions, formatter, exchangeFilter } = useApp();
 
   const [assetFilter, setAssetFilter] = useState<AssetId | null>(null);
   const [typeFilter, setTypeFilter] = useState<TxType | null>(null);
@@ -42,7 +43,7 @@ export default function Transactions({ onEdit, onAdd, onDelete }: Props) {
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   }, [filtered]);
 
-  const hasFilter = assetFilter !== null || typeFilter !== null;
+  const hasFilter = assetFilter !== null || typeFilter !== null || exchangeFilter !== null;
 
   return (
     <div className="h-full overflow-y-auto overscroll-contain">
@@ -80,6 +81,10 @@ export default function Transactions({ onEdit, onAdd, onDelete }: Props) {
               {TYPE_LABEL[value]}
             </Chip>
           ))}
+        </div>
+
+        <div className="mt-2">
+          <ExchangeSwitcher />
         </div>
       </header>
 

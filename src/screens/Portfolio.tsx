@@ -3,6 +3,7 @@ import Allocation from '../components/Allocation';
 import AssetCard, { toneClass } from '../components/AssetCard';
 import ConnectionDot from '../components/ConnectionDot';
 import PortfolioSwitcher from '../components/PortfolioSwitcher';
+import ExchangeSwitcher from '../components/ExchangeSwitcher';
 import EmptyState from '../components/EmptyState';
 import FlashValue from '../components/FlashValue';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
@@ -14,10 +15,15 @@ interface Props {
 }
 
 export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
-  const { summary, formatter, settings, transactions, refresh } = useApp();
+  const { summary, formatter, settings, transactions, allTransactions, refresh } = useApp();
   const { containerRef, pull, refreshing } = usePullToRefresh(refresh);
 
   const hasTransactions = transactions.length > 0;
+  /**
+   * Празно заради филтър е друго нещо от наистина празно портфолио —
+   * иначе съобщението подканва да добавиш първа сделка, когато вече имаш.
+   */
+  const emptyBecauseOfFilter = !hasTransactions && allTransactions.length > 0;
 
   return (
     <div ref={containerRef} className="h-full overflow-y-auto overscroll-contain">
@@ -29,8 +35,9 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
       </div>
 
       <div className="space-y-4 px-4 pb-6">
-        <div className="pt-3">
+        <div className="space-y-2 pt-3">
           <PortfolioSwitcher />
+          <ExchangeSwitcher />
         </div>
 
         <header className="text-center">
@@ -79,14 +86,20 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
 
         {hasTransactions && <Allocation summary={summary} />}
 
-        {!hasTransactions && (
-          <EmptyState
-            title="Празно портфолио"
-            message="Натисни + горе вдясно, избери актив и тип „Покупка“, въведи количество и цена. Останалото се изчислява само."
-            actionLabel="Добави първа транзакция"
-            onAction={onAddTransaction}
-          />
-        )}
+        {!hasTransactions &&
+          (emptyBecauseOfFilter ? (
+            <EmptyState
+              title="Няма нищо за този избор"
+              message="Тук няма транзакции при текущото портфолио и борса. Върни се на „Общо“ или „Всички“, за да видиш всичко."
+            />
+          ) : (
+            <EmptyState
+              title="Празно портфолио"
+              message="Натисни + горе вдясно, избери актив и тип „Покупка“, въведи количество и цена. Останалото се изчислява само."
+              actionLabel="Добави първа транзакция"
+              onAction={onAddTransaction}
+            />
+          ))}
 
         <div className="space-y-2.5">
           {summary.holdings.map((holding) => (

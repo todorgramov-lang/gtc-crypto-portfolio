@@ -119,6 +119,10 @@ export async function loadSettings(): Promise<Settings> {
       raw.goldUnit === 'oz' || raw.goldUnit === 'g'
         ? raw.goldUnit
         : DEFAULT_SETTINGS.goldUnit,
+    exchangeFilter:
+      typeof raw.exchangeFilter === 'string' && raw.exchangeFilter !== ''
+        ? raw.exchangeFilter
+        : null,
   };
 }
 
