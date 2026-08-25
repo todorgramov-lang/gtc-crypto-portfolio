@@ -11,8 +11,12 @@ export default function ExchangeSwitcher() {
 
   const optionCount = knownExchanges.length + (hasUnassignedExchange ? 1 : 0);
 
-  // С една-единствена борса филтърът няма какво да избира.
-  if (optionCount < 2) return null;
+  /**
+   * Крием реда само когато няма нито една сделка — тогава няма какво да се
+   * филтрира. При една-единствена борса го показваме, макар изборът да е
+   * очевиден: иначе функцията се крие точно от човека, който я търси.
+   */
+  if (optionCount === 0) return null;
 
   const isActive = (value: string | null) =>
     value === null
