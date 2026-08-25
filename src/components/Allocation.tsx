@@ -1,4 +1,4 @@
-import { assetInfo } from '../lib/assets';
+import { assetGroup, assetInfo } from '../lib/assets';
 import { percent } from '../lib/format';
 import type { PortfolioSummary } from '../lib/types';
 
@@ -8,7 +8,12 @@ import type { PortfolioSummary } from '../lib/types';
  */
 export default function Allocation({ summary }: { summary: PortfolioSummary }) {
   const slices = summary.holdings
-    .filter((holding) => holding.quantity.gt(0) && holding.currentValue.gt(0))
+    .filter(
+      (holding) =>
+        assetGroup(holding.asset) === 'crypto' &&
+        holding.quantity.gt(0) &&
+        holding.currentValue.gt(0),
+    )
     .sort((a, b) => b.currentValue.comparedTo(a.currentValue));
 
   if (slices.length === 0) return null;
@@ -20,7 +25,7 @@ export default function Allocation({ summary }: { summary: PortfolioSummary }) {
 
   return (
     <section className="rounded-2xl border border-ink-600/60 bg-ink-800/60 p-4">
-      <h2 className="mb-3 text-sm font-medium text-fg-muted">Разпределение</h2>
+      <h2 className="mb-3 text-sm font-medium text-fg-muted">Разпределение на криптото</h2>
 
       <div className="flex items-center gap-5">
         <svg viewBox="0 0 100 100" className="h-28 w-28 shrink-0 -rotate-90">

@@ -1,5 +1,5 @@
 import { Decimal, ZERO, divSafe } from './money';
-import { ASSET_IDS, type AssetId } from './assets';
+import { ASSET_IDS, assetGroup, type AssetId } from './assets';
 import {
   isInflow,
   isOutflow,
@@ -8,6 +8,7 @@ import {
   type PortfolioSummary,
   type Quote,
   type Quotes,
+  type Totals,
   type Transaction,
   type TxType,
 } from './types';
@@ -252,7 +253,33 @@ export function computeHolding(
   };
 }
 
-/** Цялото портфолио. */
+/** Сумира набор от позиции. Ползва се поотделно за криптото и за златото. */
+export function sumHoldings(holdings: Holding[]): Totals {
+  const value = holdings.reduce((sum, h) => sum.plus(h.currentValue), ZERO);
+  const invested = holdings.reduce((sum, h) => sum.plus(h.invested), ZERO);
+  const value24hAgo = holdings.reduce((sum, h) => sum.plus(h.value24hAgo), ZERO);
+
+  const profitLoss = value.minus(invested);
+  const change24hValue = value.minus(value24hAgo);
+
+  return {
+    value,
+    invested,
+    profitLoss,
+    profitLossPercent: invested.isZero() ? ZERO : profitLoss.div(invested).times(100),
+    realizedProfitLoss: holdings.reduce((sum, h) => sum.plus(h.realizedProfitLoss), ZERO),
+    change24hValue,
+    change24hPercent: value24hAgo.isZero()
+      ? ZERO
+      : change24hValue.div(value24hAgo).times(100),
+    hasActivity: holdings.some((h) => h.hasActivity),
+  };
+}
+
+/**
+ * Цялото портфолио, но с разделени групи: златото се сумира отделно от
+ * криптовалутите и не влиза в общата им стойност.
+ */
 export function computeSummary(
   transactions: Transaction[],
   quotes: Quotes,
@@ -262,35 +289,27 @@ export function computeSummary(
     computeHolding(asset, transactions, quotes[asset], method),
   );
 
-  const totalValue = holdings.reduce((sum, h) => sum.plus(h.currentValue), ZERO);
-  const totalInvested = holdings.reduce((sum, h) => sum.plus(h.invested), ZERO);
-  const totalValue24hAgo = holdings.reduce((sum, h) => sum.plus(h.value24hAgo), ZERO);
-  const totalProfitLoss = totalValue.minus(totalInvested);
-  const change24hValue = totalValue.minus(totalValue24hAgo);
+  const cryptoHoldings = holdings.filter((h) => assetGroup(h.asset) === 'crypto');
+  const metalHoldings = holdings.filter((h) => assetGroup(h.asset) === 'metal');
 
+  const crypto = sumHoldings(cryptoHoldings);
+  const metal = sumHoldings(metalHoldings);
+
+  // Дяловете са в рамките на криптото — иначе кръгът щеше да казва едно,
+  // а числото над него друго.
   const allocation = {} as Record<AssetId, Decimal>;
   for (const holding of holdings) {
-    allocation[holding.asset] = totalValue.isZero()
-      ? ZERO
-      : holding.currentValue.div(totalValue).times(100);
+    allocation[holding.asset] =
+      assetGroup(holding.asset) === 'crypto' && !crypto.value.isZero()
+        ? holding.currentValue.div(crypto.value).times(100)
+        : ZERO;
   }
 
   return {
     holdings,
-    totalValue,
-    totalInvested,
-    totalProfitLoss,
-    totalProfitLossPercent: totalInvested.isZero()
-      ? ZERO
-      : totalProfitLoss.div(totalInvested).times(100),
-    totalRealizedProfitLoss: holdings.reduce(
-      (sum, h) => sum.plus(h.realizedProfitLoss),
-      ZERO,
-    ),
-    change24hValue,
-    change24hPercent: totalValue24hAgo.isZero()
-      ? ZERO
-      : change24hValue.div(totalValue24hAgo).times(100),
+    crypto,
+    metal,
+    combined: sumHoldings(holdings),
     allocation,
     hasAnyActivity: holdings.some((h) => h.hasActivity),
   };

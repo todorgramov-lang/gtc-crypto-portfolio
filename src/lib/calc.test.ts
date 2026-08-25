@@ -187,10 +187,10 @@ describe('портфолио', () => {
 
     const summary = computeSummary(transactions, quotes, 'average');
 
-    expect(summary.totalInvested.toString()).toBe('200');
-    expect(summary.totalValue.toString()).toBe('600');
-    expect(summary.totalProfitLoss.toString()).toBe('400');
-    expect(summary.totalProfitLossPercent.toString()).toBe('200');
+    expect(summary.crypto.invested.toString()).toBe('200');
+    expect(summary.crypto.value.toString()).toBe('600');
+    expect(summary.crypto.profitLoss.toString()).toBe('400');
+    expect(summary.crypto.profitLossPercent.toString()).toBe('200');
     expect(summary.allocation.BTC.toString()).toBe('50');
     expect(summary.allocation.ETH.toString()).toBe('50');
   });
@@ -243,30 +243,30 @@ describe('портфолиа', () => {
     const anna = computeSummary(inPortfolio(transactions, 'anna'), quotes, 'average');
     const todor = computeSummary(inPortfolio(transactions, 'todor'), quotes, 'average');
 
-    expect(anna.totalInvested.toString()).toBe('100');
-    expect(anna.totalValue.toString()).toBe('300');
-    expect(anna.totalProfitLoss.toString()).toBe('200');
+    expect(anna.crypto.invested.toString()).toBe('100');
+    expect(anna.crypto.value.toString()).toBe('300');
+    expect(anna.crypto.profitLoss.toString()).toBe('200');
 
-    expect(todor.totalInvested.toString()).toBe('400');
-    expect(todor.totalValue.toString()).toBe('600');
-    expect(todor.totalProfitLoss.toString()).toBe('200');
+    expect(todor.crypto.invested.toString()).toBe('400');
+    expect(todor.crypto.value.toString()).toBe('600');
+    expect(todor.crypto.profitLoss.toString()).toBe('200');
   });
 
   it('общият изглед сумира двете и не смесва средните цени', () => {
     const total = computeSummary(transactions, quotes, 'average');
 
     // 3 BTC общо, себестойност (100 + 400) / 3
-    near(total.totalInvested, '500');
-    near(total.totalValue, '900');
-    near(total.totalProfitLoss, '400');
+    near(total.crypto.invested, '500');
+    near(total.crypto.value, '900');
+    near(total.crypto.profitLoss, '400');
 
     const anna = computeSummary(inPortfolio(transactions, 'anna'), quotes, 'average');
     const todor = computeSummary(inPortfolio(transactions, 'todor'), quotes, 'average');
 
     // Общото съвпада със сбора на двете.
-    near(total.totalValue, anna.totalValue.plus(todor.totalValue).toFixed());
-    near(total.totalProfitLoss, anna.totalProfitLoss.plus(todor.totalProfitLoss).toFixed());
-    near(total.totalInvested, anna.totalInvested.plus(todor.totalInvested).toFixed());
+    near(total.crypto.value, anna.crypto.value.plus(todor.crypto.value).toFixed());
+    near(total.crypto.profitLoss, anna.crypto.profitLoss.plus(todor.crypto.profitLoss).toFixed());
+    near(total.crypto.invested, anna.crypto.invested.plus(todor.crypto.invested).toFixed());
   });
 
   it('наличността на едното не покрива продажба от другото', () => {
@@ -343,6 +343,55 @@ describe('злато и мерки', () => {
     expect(holding.invested.toString()).toBe('4000');
     expect(holding.currentValue.toString()).toBe('4629.22');
     expect(holding.unrealizedProfitLoss.toString()).toBe('629.22');
+  });
+});
+
+describe('златото стои отделно', () => {
+  const transactions = [
+    tx('buy', '1', '100', { day: 1, asset: 'BTC' }),
+    tx('buy', '1', '4000', { day: 2, asset: 'XAU' }),
+  ];
+  const quotes: Quotes = {
+    BTC: quote('300', '0', 'BTC'),
+    XAU: quote('4600', '0', 'XAU'),
+  };
+
+  it('не влиза в общата стойност на криптото', () => {
+    const summary = computeSummary(transactions, quotes, 'average');
+
+    // Криптото вижда само биткойна.
+    expect(summary.crypto.value.toString()).toBe('300');
+    expect(summary.crypto.invested.toString()).toBe('100');
+    expect(summary.crypto.profitLoss.toString()).toBe('200');
+
+    // Златото си има собствени суми.
+    expect(summary.metal.value.toString()).toBe('4600');
+    expect(summary.metal.invested.toString()).toBe('4000');
+    expect(summary.metal.profitLoss.toString()).toBe('600');
+  });
+
+  it('двете заедно дават общото', () => {
+    const summary = computeSummary(transactions, quotes, 'average');
+
+    near(summary.combined.value, summary.crypto.value.plus(summary.metal.value).toFixed());
+    near(
+      summary.combined.profitLoss,
+      summary.crypto.profitLoss.plus(summary.metal.profitLoss).toFixed(),
+    );
+  });
+
+  it('дяловете се смятат само в рамките на криптото', () => {
+    const withEth = [...transactions, tx('buy', '10', '10', { day: 3, asset: 'ETH' })];
+    const summary = computeSummary(
+      withEth,
+      { ...quotes, ETH: quote('30', '0', 'ETH') },
+      'average',
+    );
+
+    // BTC 300 + ETH 300 = 600 крипто; златото не участва в кръга.
+    expect(summary.allocation.BTC.toString()).toBe('50');
+    expect(summary.allocation.ETH.toString()).toBe('50');
+    expect(summary.allocation.XAU.toString()).toBe('0');
   });
 });
 

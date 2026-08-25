@@ -5,6 +5,9 @@
 
 export type AssetId = 'BTC' | 'ETH' | 'SOL' | 'HYPE' | 'XAU';
 
+/** Криптовалути и благородни метали се сумират отделно. */
+export type AssetGroup = 'crypto' | 'metal';
+
 export interface AssetInfo {
   id: AssetId;
   name: string;
@@ -27,6 +30,11 @@ export interface AssetInfo {
   canonicalUnit: string;
   /** Пояснение под името, когато има какво да се каже за източника. */
   note?: string;
+  /**
+   * Към коя група спада. Групите се сумират поотделно — златото не влиза
+   * в общата стойност на криптото.
+   */
+  group: AssetGroup;
 }
 
 export const ASSETS: Record<AssetId, AssetInfo> = {
@@ -40,6 +48,7 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     tint: '#F7931A',
     glyph: 'B',
     canonicalUnit: 'BTC',
+    group: 'crypto',
   },
   ETH: {
     id: 'ETH',
@@ -51,6 +60,7 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     tint: '#8A92B2',
     glyph: 'E',
     canonicalUnit: 'ETH',
+    group: 'crypto',
   },
   SOL: {
     id: 'SOL',
@@ -62,6 +72,7 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     tint: '#14F195',
     glyph: 'S',
     canonicalUnit: 'SOL',
+    group: 'crypto',
   },
   HYPE: {
     id: 'HYPE',
@@ -73,6 +84,7 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     tint: '#4FE9CD',
     glyph: 'H',
     canonicalUnit: 'HYPE',
+    group: 'crypto',
   },
   XAU: {
     id: 'XAU',
@@ -90,6 +102,7 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
     tint: '#D4AF37',
     glyph: 'Au',
     canonicalUnit: 'oz',
+    group: 'metal',
     note: 'по PAX Gold',
   },
 };
@@ -98,6 +111,14 @@ export const ASSETS: Record<AssetId, AssetInfo> = {
 export const ASSET_IDS: AssetId[] = ['BTC', 'ETH', 'SOL', 'HYPE', 'XAU'];
 
 export const assetInfo = (id: AssetId): AssetInfo => ASSETS[id];
+
+export const assetGroup = (id: AssetId): AssetGroup => ASSETS[id].group;
+
+/** Имената на групите, както се показват.  */
+export const GROUP_LABEL: Record<AssetGroup, string> = {
+  crypto: 'Крипто',
+  metal: 'Злато',
+};
 
 /** Количествата се показват с най-много толкова знака. */
 export const QUANTITY_DECIMALS = 8;

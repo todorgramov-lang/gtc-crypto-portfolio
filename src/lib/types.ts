@@ -63,16 +63,28 @@ export interface Holding {
   change24hValue: Decimal;
 }
 
-export interface PortfolioSummary {
-  holdings: Holding[];
-  totalValue: Decimal;
-  totalInvested: Decimal;
-  totalProfitLoss: Decimal;
-  totalProfitLossPercent: Decimal;
-  totalRealizedProfitLoss: Decimal;
+/** Сумите на една група активи. Всичко в USD. */
+export interface Totals {
+  value: Decimal;
+  invested: Decimal;
+  profitLoss: Decimal;
+  profitLossPercent: Decimal;
+  realizedProfitLoss: Decimal;
   change24hValue: Decimal;
   change24hPercent: Decimal;
-  /** Дял на всеки актив в проценти. */
+  /** Има ли изобщо движения в тази група. */
+  hasActivity: boolean;
+}
+
+export interface PortfolioSummary {
+  holdings: Holding[];
+  /** Криптовалутите — това е голямото число най-горе. */
+  crypto: Totals;
+  /** Златото — стои отделно, за да не се смесва с криптото. */
+  metal: Totals;
+  /** Двете заедно; ползва се само където изрично трябва общо. */
+  combined: Totals;
+  /** Дял на всеки крипто актив в проценти, в рамките на криптото. */
   allocation: Record<AssetId, Decimal>;
   hasAnyActivity: boolean;
 }

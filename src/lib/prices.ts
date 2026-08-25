@@ -33,10 +33,17 @@ export interface FeedState {
 
 type Listener = (state: FeedState) => void;
 
+/**
+ * Символът, от който взимаме живия курс евро/долар. CoinGecko го дава веднъж
+ * на десет минути; тук идва с всеки тик, затова цените в евро са наистина живи.
+ */
+export const FX_SYMBOL = 'EURUSDT';
+
 const BINANCE_WS = (assets: AssetId[]): string => {
-  const streams = assets
-    .map((id) => `${ASSETS[id].binanceSymbol.toLowerCase()}@ticker`)
-    .join('/');
+  const streams = [
+    ...assets.map((id) => `${ASSETS[id].binanceSymbol.toLowerCase()}@ticker`),
+    `${FX_SYMBOL.toLowerCase()}@ticker`,
+  ].join('/');
   return `wss://stream.binance.com:9443/stream?streams=${streams}`;
 };
 
@@ -99,6 +106,11 @@ export class PriceFeed {
 
   /** Активите, за които Binance реално е доставил тик. */
   private binanceCovered = new Set<AssetId>();
+  /**
+   * Кога за последно е дошъл жив курс евро/долар. Докато е пресен, REST
+   * заявките не го пипат — техният е стар до десет минути.
+   */
+  private fxUpdatedAt = 0;
   private startedAt = 0;
   private running = false;
 
@@ -221,6 +233,12 @@ export class PriceFeed {
     };
 
     socket.onmessage = (event) => {
+      const fx = parseFxTicker(event.data);
+      if (fx) {
+        this.applyFxRate(fx);
+        return;
+      }
+
       const quote = parseBinanceTicker(event.data);
       if (!quote) return;
       this.binanceCovered.add(quote.asset);
@@ -344,7 +362,11 @@ export class PriceFeed {
   private async refreshFromRest(force = false): Promise<void> {
     try {
       const result = await fetchCoinGecko();
-      if (result.eurPerUsd && result.eurPerUsd.gt(0)) {
+
+      // Живият курс от Binance е по-пресен от този на CoinGecko; пипаме го
+      // само ако потокът мълчи.
+      const fxIsStale = Date.now() - this.fxUpdatedAt > LIVE_FRESHNESS_MS;
+      if (fxIsStale && result.eurPerUsd && result.eurPerUsd.gt(0)) {
         this.eurPerUsd = result.eurPerUsd;
         void saveFxRate(result.eurPerUsd);
       }
@@ -400,6 +422,28 @@ export class PriceFeed {
   // -------------------------------------------------------------------------
   // Общо прилагане
   // -------------------------------------------------------------------------
+
+  /**
+   * Живият курс от Binance. `EURUSDT` показва колко долара струва едно евро,
+   * а нам ни трябва обратното — колко евро струва един долар.
+   */
+  private applyFxRate(eurUsdt: Decimal): void {
+    if (eurUsdt.lte(0)) return;
+
+    const eurPerUsd = dec(1).div(eurUsdt);
+    this.fxUpdatedAt = Date.now();
+
+    // Пресмятанията текат при всеки тик; записваме само при осезаема промяна,
+    // за да не хабим IndexedDB на всяка стотна от процента.
+    const changed = this.eurPerUsd.isZero()
+      ? true
+      : eurPerUsd.minus(this.eurPerUsd).abs().div(this.eurPerUsd).gt(dec('0.0001'));
+
+    this.eurPerUsd = eurPerUsd;
+    if (changed) void saveFxRate(eurPerUsd);
+
+    this.emit();
+  }
 
   private apply(quote: Quote): void {
     const previous = this.quotes[quote.asset];
@@ -497,6 +541,31 @@ export function parseBinanceTicker(raw: unknown): Quote | null {
     source: 'binance',
     timestamp: Date.now(),
   };
+}
+
+/**
+ * Курсът евро/долар от същия поток. Връща колко долара струва едно евро,
+ * или null, ако съобщението е за нещо друго.
+ */
+export function parseFxTicker(raw: unknown): Decimal | null {
+  if (typeof raw !== 'string') return null;
+  // Бърза проверка, преди да плащаме за JSON.parse на всеки тик.
+  if (!raw.includes(FX_SYMBOL)) return null;
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  const envelope = payload as { data?: unknown };
+  const ticker = (envelope.data ?? payload) as { s?: string; c?: string };
+
+  if (ticker.s !== FX_SYMBOL) return null;
+
+  const price = parseApiNumber(ticker.c);
+  return price && price.gt(0) ? price : null;
 }
 
 /** Hyperliquid: { channel: 'allMids', data: { mids: { HYPE: '12.34' } } } */
