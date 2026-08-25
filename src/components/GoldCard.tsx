@@ -10,6 +10,8 @@ interface Props {
   formatter: Formatter;
   flashEnabled: boolean;
   onOpen: () => void;
+  /** Извиква се от празната карта — води право към въвеждане. */
+  onAdd: () => void;
 }
 
 /**
@@ -22,15 +24,21 @@ export default function GoldCard({
   formatter,
   flashEnabled,
   onOpen,
+  onAdd,
 }: Props) {
-  if (!holding || !totals.hasActivity) return null;
+  /**
+   * Показваме блока и когато още нямаш злато — иначе, за да го видиш, трябва
+   * вече да го притежаваш, а няма откъде да разбереш, че изобщо съществува.
+   */
+  if (!holding) return null;
 
   const info = assetInfo(holding.asset);
+  const isEmpty = !totals.hasActivity;
 
   return (
     <button
       type="button"
-      onClick={onOpen}
+      onClick={isEmpty ? onAdd : onOpen}
       className="w-full rounded-2xl border p-3.5 text-left transition active:scale-[0.99]"
       style={{
         borderColor: `${info.tint}33`,
@@ -54,34 +62,59 @@ export default function GoldCard({
         </span>
 
         <span className="num text-sm text-fg-muted">
-          {formatter.quantity(holding.quantity, holding.asset)}
+          {isEmpty ? '—' : formatter.quantity(holding.quantity, holding.asset)}
         </span>
       </div>
 
-      <div className="mt-2 flex items-baseline justify-between gap-3">
-        <FlashValue
-          value={totals.value}
-          text={formatter.money(totals.value)}
-          enabled={flashEnabled}
-          className="text-[22px] font-bold"
-        />
-
-        <span className={`num flex items-baseline gap-2 ${toneClass(totals.profitLoss)}`}>
-          <span className="text-sm font-medium">
-            {formatter.signedMoney(totals.profitLoss)}
+      {isEmpty ? (
+        // Празно: показваме живата цена и подканваме, вместо редица нули.
+        <div className="mt-2 flex items-baseline justify-between gap-3">
+          <FlashValue
+            value={holding.currentPrice}
+            text={formatter.price(holding.currentPrice, holding.asset)}
+            enabled={flashEnabled}
+            className="text-[22px] font-bold"
+          />
+          <span className={`num text-sm ${toneClass(holding.change24hPercent)}`}>
+            24ч {formatter.signedPercent(holding.change24hPercent)}
           </span>
-          <span className="text-xs">{formatter.signedPercent(totals.profitLossPercent)}</span>
-        </span>
-      </div>
+        </div>
+      ) : (
+        <>
+          <div className="mt-2 flex items-baseline justify-between gap-3">
+            <FlashValue
+              value={totals.value}
+              text={formatter.money(totals.value)}
+              enabled={flashEnabled}
+              className="text-[22px] font-bold"
+            />
 
-      <div className="mt-1 flex items-center justify-between gap-3 text-xs">
-        <span className="text-fg-faint">
-          Цена {formatter.price(holding.currentPrice, holding.asset)}
-        </span>
-        <span className={`num ${toneClass(totals.change24hValue)}`}>
-          24ч {formatter.signedPercent(totals.change24hPercent)}
-        </span>
-      </div>
+            <span className={`num flex items-baseline gap-2 ${toneClass(totals.profitLoss)}`}>
+              <span className="text-sm font-medium">
+                {formatter.signedMoney(totals.profitLoss)}
+              </span>
+              <span className="text-xs">
+                {formatter.signedPercent(totals.profitLossPercent)}
+              </span>
+            </span>
+          </div>
+
+          <div className="mt-1 flex items-center justify-between gap-3 text-xs">
+            <span className="text-fg-faint">
+              Цена {formatter.price(holding.currentPrice, holding.asset)}
+            </span>
+            <span className={`num ${toneClass(totals.change24hValue)}`}>
+              24ч {formatter.signedPercent(totals.change24hPercent)}
+            </span>
+          </div>
+        </>
+      )}
+
+      {isEmpty && (
+        <p className="mt-1.5 text-xs text-fg-faint">
+          Още нямаш злато. Натисни, за да добавиш покупка.
+        </p>
+      )}
     </button>
   );
 }

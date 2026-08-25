@@ -12,7 +12,7 @@ import { useApp } from '../store';
 
 interface Props {
   onOpenAsset: (asset: AssetId) => void;
-  onAddTransaction: () => void;
+  onAddTransaction: (asset?: AssetId) => void;
 }
 
 export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
@@ -45,19 +45,15 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
         <header className="text-center">
           <ConnectionDot />
 
-          {summary.metal.hasActivity && (
-            <p className="mt-3 text-xs font-medium uppercase tracking-wider text-fg-faint">
-              Крипто
-            </p>
-          )}
+          <p className="mt-3 text-xs font-medium uppercase tracking-wider text-fg-faint">
+            Крипто
+          </p>
 
           <FlashValue
             value={summary.crypto.value}
             text={formatter.money(summary.crypto.value)}
             enabled={settings.priceFlash}
-            className={`block text-[36px] font-bold leading-none ${
-              summary.metal.hasActivity ? 'mt-1' : 'mt-3'
-            }`}
+            className="mt-1 block text-[36px] font-bold leading-none"
           />
 
           <div
@@ -100,6 +96,7 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
           formatter={formatter}
           flashEnabled={settings.priceFlash}
           onOpen={() => onOpenAsset('XAU')}
+          onAdd={() => onAddTransaction('XAU')}
         />
 
         {hasTransactions && <Allocation summary={summary} />}

@@ -47,7 +47,7 @@ export default function App() {
         ) : tab === 'portfolio' ? (
           <Portfolio
             onOpenAsset={setOpenAsset}
-            onAddTransaction={() => setEditor({ kind: 'create' })}
+            onAddTransaction={(asset) => setEditor({ kind: 'create', asset })}
           />
         ) : tab === 'transactions' ? (
           <Transactions
