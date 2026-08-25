@@ -398,6 +398,56 @@ describe('златото стои отделно', () => {
   });
 });
 
+describe('монети и кюлчета заедно', () => {
+  /** Както редакторът: въведеното в дадена мярка става унции. */
+  const buyGold = (amount: string, unit: 'oz' | 'g', pricePerUnit: string, day: number) =>
+    tx(
+      'buy',
+      toCanonicalQuantity(dec(amount), 'XAU', unit).toFixed(),
+      toCanonicalPrice(dec(pricePerUnit), 'XAU', unit).toFixed(),
+      { day, asset: 'XAU', currency: 'EUR' },
+    );
+
+  it('събират се без грешка, защото и двете стават унции', () => {
+    // Монета: 1 унция по €3 500. Кюлче: 50 грама по €115 за грам.
+    const transactions = [
+      buyGold('1', 'oz', '3500', 1),
+      buyGold('50', 'g', '115', 2),
+    ];
+
+    const holding = computeHolding('XAU', transactions, quote('4000', '0', 'XAU'), 'average');
+
+    // 1 oz + 50 г = 1 + 50/31.1034768 = 2.607534…
+    const expectedOunces = dec(1).plus(dec('50').div(dec(GRAMS_PER_TROY_OUNCE)));
+    near(holding.quantity, expectedOunces.toFixed());
+
+    // Платено: €3 500 + 50 × €115 = €9 250
+    near(holding.invested, '9250');
+  });
+
+  it('кюлчето се вижда и в грамове, и в унции', () => {
+    const bar = buyGold('50', 'g', '115', 1);
+
+    near(toDisplayQuantity(bar.quantity, 'XAU', 'g'), '50');
+    near(
+      toDisplayQuantity(bar.quantity, 'XAU', 'oz'),
+      dec('50').div(dec(GRAMS_PER_TROY_OUNCE)).toFixed(),
+    );
+  });
+
+  it('цената за грам и за унция описват една и съща сделка', () => {
+    const perGram = buyGold('50', 'g', '115', 1);
+
+    // €115 за грам е €3 576.90 за унция.
+    near(
+      perGram.pricePerUnit,
+      dec('115').times(dec(GRAMS_PER_TROY_OUNCE)).toFixed(),
+    );
+    // Общата платена сума не зависи от мярката, в която си въвел.
+    near(perGram.quantity.times(perGram.pricePerUnit), '5750');
+  });
+});
+
 describe('валута на сделката', () => {
   /** Както приложението: сделките се привеждат към показваната валута. */
   const inCurrency = (

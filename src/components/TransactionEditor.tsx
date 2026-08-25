@@ -4,12 +4,15 @@ import { ASSET_IDS, assetInfo, type AssetId } from '../lib/assets';
 import { availableQuantity } from '../lib/calc';
 import { money, csvNumber } from '../lib/format';
 import {
+  GOLD_UNITS,
+  hasUnitChoice,
   toCanonicalPrice,
   toCanonicalQuantity,
   toDisplayPrice,
   toDisplayQuantity,
   unitLabel,
   unitNameSingular,
+  type GoldUnit,
 } from '../lib/units';
 import { parseUserNumber, ZERO } from '../lib/money';
 import { newId } from '../lib/storage';
@@ -46,7 +49,13 @@ export default function TransactionEditor({ mode, onClose }: Props) {
   const [asset, setAsset] = useState<AssetId>(
     editing?.asset ?? (mode.kind === 'create' ? mode.asset : undefined) ?? 'BTC',
   );
-  const goldUnit = app.settings.goldUnit;
+  /**
+   * Мярката за въвеждане е на самата сделка. Монетите са в унции,
+   * кюлчетата в грамове — и двете се записват в унции.
+   * Общата настройка задава само от коя тръгваме.
+   */
+  const [entryUnit, setEntryUnit] = useState<GoldUnit>(app.settings.goldUnit);
+  const goldUnit = entryUnit;
 
   const [type, setType] = useState<TxType>(editing?.type ?? 'buy');
 
@@ -136,6 +145,25 @@ export default function TransactionEditor({ mode, onClose }: Props) {
     if (Number.isNaN(Date.parse(dateText))) return 'Въведи валидна дата.';
     return null;
   }, [quantity, pricePerUnit, fee, type, available, asset, dateText, app.formatter]);
+
+  /**
+   * Смяна на мярката насред въвеждането. Числата се преизчисляват, за да не
+   * останат 50 грама написани, а мярката вече да казва унции.
+   */
+  function switchUnit(next: GoldUnit) {
+    if (next === entryUnit) return;
+
+    if (quantityInput) {
+      const canonical = toCanonicalQuantity(quantityInput, asset, entryUnit);
+      setQuantityText(csvNumber(toDisplayQuantity(canonical, asset, next)));
+    }
+    if (priceInput) {
+      const canonical = toCanonicalPrice(priceInput, asset, entryUnit);
+      setPriceText(csvNumber(toDisplayPrice(canonical, asset, next)));
+    }
+
+    setEntryUnit(next);
+  }
 
   async function handleSave() {
     if (error || !quantity || !pricePerUnit || saving) return;
@@ -272,6 +300,29 @@ export default function TransactionEditor({ mode, onClose }: Props) {
             )}
           </Field>
 
+          {hasUnitChoice(asset) && (
+            <Field label="Мярка на тази сделка">
+              <div className="grid grid-cols-2 gap-1.5">
+                {GOLD_UNITS.map((unit) => (
+                  <button
+                    key={unit.id}
+                    type="button"
+                    onClick={() => switchUnit(unit.id)}
+                    className={`rounded-xl py-2 text-sm font-medium transition ${
+                      entryUnit === unit.id ? 'bg-fg text-ink-900' : 'bg-ink-700 text-fg-muted'
+                    }`}
+                  >
+                    {unit.name}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 px-1 text-xs text-fg-faint">
+                Монетите обикновено са в унции, кюлчетата в грамове. И двете се
+                записват в унции, затова се събират без грешка.
+              </p>
+            </Field>
+          )}
+
           <NumberField
             label="Количество"
             value={quantityText}
@@ -323,6 +374,16 @@ export default function TransactionEditor({ mode, onClose }: Props) {
           />
 
           <div className="rounded-xl bg-ink-700/50 px-3 py-2.5">
+            {/* Грамовете влизат в наличността като унции — показваме колко. */}
+            {hasUnitChoice(asset) && entryUnit === 'g' && quantity && (
+              <div className="mb-1.5 flex items-center justify-between border-b border-ink-600/60 pb-1.5">
+                <span className="text-[13px] text-fg-faint">В наличността</span>
+                <span className="num text-[13px] text-fg-muted">
+                  {csvNumber(quantity.toDecimalPlaces(6))} oz
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <span className="text-sm text-fg-muted">Обща стойност</span>
               <span className="num text-base font-semibold">{money(total, currency)}</span>
