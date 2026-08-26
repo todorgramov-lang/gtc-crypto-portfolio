@@ -12,7 +12,8 @@ export default function PortfolioSwitcher() {
   if (portfolios.length < 2) return null;
 
   return (
-    <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1">
+    <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
+      <div className="mx-auto flex w-max gap-1.5">
       <button
         type="button"
         onClick={() => setSelection(ALL_PORTFOLIOS)}
@@ -48,6 +49,7 @@ export default function PortfolioSwitcher() {
           </button>
         );
       })}
+      </div>
     </div>
   );
 }

@@ -1,12 +1,11 @@
-import { assetGroup, type AssetId } from '../lib/assets';
+import { assetGroup, assetInfo, type AssetId } from '../lib/assets';
 import Allocation from '../components/Allocation';
-import AssetCard, { toneClass } from '../components/AssetCard';
+import AssetCard from '../components/AssetCard';
 import ConnectionDot from '../components/ConnectionDot';
 import PortfolioSwitcher from '../components/PortfolioSwitcher';
 import ExchangeSwitcher from '../components/ExchangeSwitcher';
-import GoldCard from '../components/GoldCard';
+import SummaryCard from '../components/SummaryCard';
 import EmptyState from '../components/EmptyState';
-import FlashValue from '../components/FlashValue';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { useApp } from '../store';
 
@@ -26,6 +25,8 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
    */
   const emptyBecauseOfFilter = !hasTransactions && allTransactions.length > 0;
 
+  const gold = summary.holdings.find((holding) => holding.asset === 'XAU');
+
   return (
     <div ref={containerRef} className="h-full overflow-y-auto overscroll-contain">
       <div
@@ -41,63 +42,49 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
           <ExchangeSwitcher />
         </div>
 
-        {/* Голямото число е само криптото — златото има свой блок отдолу. */}
-        <header className="text-center">
-          <ConnectionDot />
+        <ConnectionDot />
 
-          <p className="mt-3 text-xs font-medium uppercase tracking-wider text-fg-faint">
-            Крипто
-          </p>
-
-          <FlashValue
-            value={summary.crypto.value}
-            text={formatter.money(summary.crypto.value)}
-            enabled={settings.priceFlash}
-            className="mt-1 block text-[36px] font-bold leading-none"
+        {/*
+          Двете стойности се рисуват от една и съща обвивка — крипто и злато
+          изглеждат еднакво и стоят едно до друго, без едното да е заглавие,
+          а другото карта.
+        */}
+        <div className="space-y-2.5">
+          <SummaryCard
+            label="Крипто"
+            totals={summary.crypto}
+            formatter={formatter}
+            flashEnabled={settings.priceFlash}
           />
 
-          <div
-            className={`mt-2 flex items-center justify-center gap-2 text-base font-semibold ${toneClass(
-              summary.crypto.profitLoss,
-            )}`}
-          >
-            <span className="num">{formatter.signedMoney(summary.crypto.profitLoss)}</span>
-            <span className="num">
-              {formatter.signedPercent(summary.crypto.profitLossPercent)}
-            </span>
-          </div>
-
-          <div
-            className={`mt-1 flex items-center justify-center gap-1.5 text-sm ${toneClass(
-              summary.crypto.change24hValue,
-            )}`}
-          >
-            <span aria-hidden>{summary.crypto.change24hValue.gte(0) ? '↑' : '↓'}</span>
-            <span className="text-fg-faint">24ч</span>
-            <span className="num">{formatter.signedMoney(summary.crypto.change24hValue)}</span>
-            <span className="num">
-              ({formatter.signedPercent(summary.crypto.change24hPercent)})
-            </span>
-          </div>
-
-          {!summary.crypto.realizedProfitLoss.isZero() && (
-            <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[13px]">
-              <span className="text-fg-faint">Реализирана П/З</span>
-              <span className={`num ${toneClass(summary.crypto.realizedProfitLoss)}`}>
-                {formatter.signedMoney(summary.crypto.realizedProfitLoss)}
-              </span>
-            </div>
+          {gold && (
+            <SummaryCard
+              label="Злато"
+              accent={assetInfo('XAU').tint}
+              totals={summary.metal}
+              formatter={formatter}
+              flashEnabled={settings.priceFlash}
+              aside={
+                summary.metal.hasActivity
+                  ? formatter.quantity(gold.quantity, 'XAU')
+                  : undefined
+              }
+              onClick={() =>
+                summary.metal.hasActivity ? onOpenAsset('XAU') : onAddTransaction('XAU')
+              }
+              emptyValue={
+                summary.metal.hasActivity
+                  ? undefined
+                  : {
+                      value: gold.currentPrice,
+                      text: formatter.price(gold.currentPrice, 'XAU'),
+                      change: gold.change24hPercent,
+                      hint: 'Още нямаш злато. Натисни, за да добавиш покупка.',
+                    }
+              }
+            />
           )}
-        </header>
-
-        <GoldCard
-          totals={summary.metal}
-          holding={summary.holdings.find((h) => h.asset === 'XAU')}
-          formatter={formatter}
-          flashEnabled={settings.priceFlash}
-          onOpen={() => onOpenAsset('XAU')}
-          onAdd={() => onAddTransaction('XAU')}
-        />
+        </div>
 
         {hasTransactions && <Allocation summary={summary} />}
 
@@ -120,11 +107,11 @@ export default function Portfolio({ onOpenAsset, onAddTransaction }: Props) {
           {summary.holdings
             .filter((holding) => assetGroup(holding.asset) === 'crypto')
             .map((holding) => (
-            <AssetCard
-              key={holding.asset}
-              holding={holding}
-              formatter={formatter}
-              flashEnabled={settings.priceFlash}
+              <AssetCard
+                key={holding.asset}
+                holding={holding}
+                formatter={formatter}
+                flashEnabled={settings.priceFlash}
                 onOpen={() => onOpenAsset(holding.asset)}
               />
             ))}

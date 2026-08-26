@@ -29,7 +29,8 @@ export default function ExchangeSwitcher() {
     }`;
 
   return (
-    <div className="no-scrollbar -mx-1 flex items-center gap-1.5 overflow-x-auto px-1">
+    <div className="no-scrollbar -mx-1 overflow-x-auto px-1">
+      <div className="mx-auto flex w-max items-center gap-1.5">
       <span className="shrink-0 pr-0.5 text-sm text-fg-faint">Борса</span>
 
       <button
@@ -63,6 +64,7 @@ export default function ExchangeSwitcher() {
           Без борса
         </button>
       )}
+      </div>
     </div>
   );
 }
